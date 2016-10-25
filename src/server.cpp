@@ -2,7 +2,8 @@
 // by wd
 // 将四个玩家的程序命名为player0~3.exe
 // 与server.exe，input.txt，output.txt，debug.txt放在同一文件夹下
-// 初始input.txt为空，将defaultInput.txt复制到input.txt，清空debug.txt
+// 初始input.txt为空，将defaultInput.txt复制到input.txt
+// defaultInput.txt中没有id，由server.exe添加
 
 #include <cstdlib>
 #include <fstream>
@@ -17,36 +18,43 @@ using namespace std;
 
 int main()
 {
-    ifstream fin("input.txt");
+    ifstream fin;
     stringstream ss;
+    fin.open(".\\player0\\input.txt");
     ss << fin.rdbuf();
     fin.close();
     string str = ss.str();
+    ss.clear();
     Json::Value input;
-    int id;
     if (str == "")
     {
-        ifstream fDefaultIn("defaultInput.txt", ifstream::binary);
-        fDefaultIn >> input;
-        input["requests"][0]["id"] = id = 0;
-        ofstream fout("debug.txt");
-        fout.close();
+        fin.open(".\\defaultInput.txt", ifstream::binary);
+        fin >> input;
+        fin.close();
     }
     else
     {
         Json::Reader reader;
         reader.parse(str, input);
-        id = input["requests"][0]["id"].asInt();
-        input["requests"][0]["id"] = id = (id + 1) % MAX_PLAYER_COUNT;
         int len = input["requests"].size();
         Json::Value input2;
-        ifstream fin2("output.txt", ifstream::binary);
-        fin2 >> input2;
-        input["requests"][len] = input2;
+        for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+        {
+            fin.open(".\\player" + to_string(i) + "\\output.txt",
+                     ifstream::binary);
+            fin >> input2;
+            input["requests"][len][to_string(i)] = input2["response"];
+            fin.close();
+        }
     }
     Json::FastWriter writer;
-    ofstream fout("input.txt");
-    fout << writer.write(input);
-    // system("player0.exe");
+    ofstream fout;
+    for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+    {
+        input["requests"][0]["id"] = i;
+        fout.open(".\\player" + to_string(i) + "\\input.txt");
+        fout << writer.write(input);
+        fout.close();
+    }
     return 0;
 }

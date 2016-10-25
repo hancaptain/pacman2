@@ -1,8 +1,10 @@
 server.exe
-player0.exe
-server.exe
-player1.exe
-server.exe
-player2.exe
-server.exe
-player3.exe
+cd player0
+player.exe
+cd ..\player1
+player.exe
+cd ..\player2
+player.exe
+cd ..\player3
+player.exe
+cd ..

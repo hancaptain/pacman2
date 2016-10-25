@@ -48,15 +48,17 @@
 #define MAX_GENERATOR_COUNT 4  // 每个象限1
 #define MAX_PLAYER_COUNT 4
 #define MAX_TURN 100
+#define MAX_DIRECTION 9
 
-// 你也可以选用 using namespace std; 但是会污染命名空间
-using std::string;
-using std::swap;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::getline;
-using std::runtime_error;
+using namespace std;
+// using std::string;
+// using std::swap;
+// using std::cin;
+// using std::cout;
+// using std::endl;
+// using std::getline;
+// using std::runtime_error;
+// using std::setw;
 
 // 平台提供的吃豆人相关逻辑处理程序
 namespace Pacman
@@ -64,26 +66,6 @@ namespace Pacman
 const time_t seed = time(0);
 const int dx[] = {0, 1, 0, -1, 1, 1, -1, -1},
           dy[] = {-1, 0, 1, 0, -1, 1, 1, -1};
-
-// 枚举定义；使用枚举虽然会浪费空间（sizeof(GridContentType) == 4），
-// 但是计算机处理32位的数字效率更高
-
-// 每个格子可能变化的内容，会采用“或”逻辑进行组合
-enum GridContentType
-{
-    empty = 0,                   // 其实不会用到
-    player1 = 1,                 // 1号玩家
-    player2 = 2,                 // 2号玩家
-    player3 = 4,                 // 3号玩家
-    player4 = 8,                 // 4号玩家
-    playerMask = 1 | 2 | 4 | 8,  // 用于检查有没有玩家等
-    smallFruit = 16,             // 小豆子
-    largeFruit = 32              // 大豆子
-};
-
-// 用玩家ID换取格子上玩家的二进制位
-GridContentType playerID2Mask[] = {player1, player2, player3, player4};
-string playerID2str[] = {"0", "1", "2", "3"};
 
 // 让枚举也可以用这些运算了（不加会编译错误）
 template <typename T>
@@ -121,6 +103,26 @@ inline T operator~(const T &a)
 {
     return static_cast<T>(~static_cast<int>(a));
 }
+
+// 枚举定义；使用枚举虽然会浪费空间（sizeof(GridContentType) == 4），
+// 但是计算机处理32位的数字效率更高
+
+// 每个格子可能变化的内容，会采用“或”逻辑进行组合
+enum GridContentType
+{
+    empty = 0,                   // 其实不会用到
+    player1 = 1,                 // 1号玩家
+    player2 = 2,                 // 2号玩家
+    player3 = 4,                 // 3号玩家
+    player4 = 8,                 // 4号玩家
+    playerMask = 1 | 2 | 4 | 8,  // 用于检查有没有玩家等
+    smallFruit = 16,             // 小豆子
+    largeFruit = 32              // 大豆子
+};
+
+// 用玩家ID换取格子上玩家的二进制位
+GridContentType playerID2Mask[] = {player1, player2, player3, player4};
+string playerID2str[] = {"0", "1", "2", "3"};
 
 // 每个格子固定的东西，会采用“或”逻辑进行组合
 enum GridStaticType
@@ -310,13 +312,16 @@ class GameField
     }
 
     // 判断指定玩家向指定方向移动/施放技能是不是合法的（没有撞墙且没有踩到豆子产生器、力量足够）
-    inline bool ActionValid(int playerID, Direction &dir) const
+    inline bool ActionValid(int playerID, Direction dir) const
     {
         if (dir == stay) return true;
         const Player &p = players[playerID];
-        if (dir >= shootUp) return dir < 8 && p.strength > SKILL_COST;
-        return dir >= 0 && dir < 4 &&
-               !(fieldStatic[p.row][p.col] & direction2OpposingWall[dir]);
+        if (dir >= up && dir <= left &&
+            !(fieldStatic[p.row][p.col] & direction2OpposingWall[dir]))
+            return true;
+        if (dir >= shootUp && dir <= shootLeft && p.strength > SKILL_COST)
+            return true;
+        return false;
     }
 
     // 在向actions写入玩家动作后，演算下一回合局面，并记录之前所有的场地状态，可供日后恢复。
@@ -416,7 +421,7 @@ class GameField
                     // 从格子上移走
                     fieldContent[p.row][p.col] &= ~playerID2Mask[id];
                     p.dead = true;
-                    int drop = p.strength / 2;
+                    int drop = p.strength * 0.5;
                     bt.strengthDelta[id] += -drop;
                     bt.change[id] |= TurnStateTransfer::die;
                     lootedStrength += drop;
@@ -493,7 +498,7 @@ class GameField
             NewFruits &fruits = newFruits[newFruitsCount++];
             fruits.newFruitCount = 0;
             for (i = 0; i < generatorCount; i++)
-                for (Direction d = up; d < 8; ++d)
+                for (int d = 0; d < 8; ++d)
                 {
                     // 取余，穿过场地边界
                     int r = (generators[i].row + dy[d] + height) % height,
@@ -589,7 +594,7 @@ class GameField
         }
 
         // 是否回合超限？
-        if (turnID >= 100) return false;
+        if (turnID >= MAX_TURN) return false;
 
         return true;
     }
@@ -609,13 +614,13 @@ class GameField
     {
         string str, chunk;
 #ifdef _BOTZONE_ONLINE
-        std::ios::sync_with_stdio(false);  //ω\\)
+        ios::sync_with_stdio(false);  //ω\\)
         getline(cin, str);
 #else
         if (localFileName)
         {
-            std::ifstream fin(localFileName);
-            if (fin)
+            ifstream fin(localFileName);
+            if (1)
                 while (getline(fin, chunk) && chunk != "") str += chunk;
             else
                 while (getline(cin, chunk) && chunk != "") str += chunk;
@@ -722,7 +727,7 @@ class GameField
         // 本地也用FastWriter好了
         // Json::StyledWriter writer;
         Json::FastWriter writer;
-        std::ofstream fout("output.txt");
+        ofstream fout(".\\output.txt");
         fout << writer.write(ret);
 #endif
     }
@@ -732,7 +737,7 @@ class GameField
     inline void DebugPrint() const
     {
 #ifndef _BOTZONE_ONLINE
-        std::ofstream fdebug("debug.txt", std::fstream::app);
+        ofstream fdebug(".\\debug.txt", fstream::app);
         fdebug
             << "回合号【" << turnID << "】存活人数【" << aliveCount
             << "】| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
@@ -744,8 +749,7 @@ class GameField
                    << (p.dead ? "死亡" : "存活") << "]\n";
         }
         fdebug << "  ";
-        for (int c = 0; c < width; c++)
-            fdebug << " " << std::setw(2) << c << " ";
+        for (int c = 0; c < width; c++) fdebug << " " << setw(2) << c << " ";
         fdebug << "\n";
         for (int r = 0; r < height; r++)
         {
@@ -756,7 +760,7 @@ class GameField
                 fdebug << ((fieldStatic[r][c] & wallNorth) ? "---" : "   ");
             }
             fdebug << "\n";
-            fdebug << std::setw(2) << r;
+            fdebug << setw(2) << r;
             for (int c = 0; c < width; c++)
             {
                 fdebug << ((fieldStatic[r][c] & wallWest) ? "|" : " ") << " ";
@@ -797,6 +801,15 @@ class GameField
 #endif
     }
 
+    // 输出自定义的调试信息
+    inline void DebugWrite(const string &s) const
+    {
+#ifndef _BOTZONE_ONLINE
+        ofstream fdebug(".\\debug.txt", fstream::app);
+        fdebug << s << "\n";
+#endif
+    }
+
     Json::Value SerializeCurrentTurnChange()
     {
         Json::Value result;
@@ -832,12 +845,17 @@ bool GameField::constructed = false;
 // 一些辅助程序
 namespace Helpers
 {
-double actionScore[9] = {};
+double actionScore[MAX_DIRECTION];
 
 inline int RandBetween(int a, int b)
 {
     if (a > b) swap(a, b);
     return rand() % (b - a) + a;
+}
+
+void RandomInit()
+{
+    memset(&actionScore, 0, sizeof(actionScore));
 }
 
 void RandomPlay(Pacman::GameField &gameField, int myID)
@@ -849,9 +867,9 @@ void RandomPlay(Pacman::GameField &gameField, int myID)
         for (int i = 0; i < MAX_PLAYER_COUNT; i++)
         {
             if (gameField.players[i].dead) continue;
-            Pacman::Direction valid[9];
+            Pacman::Direction valid[MAX_DIRECTION];
             int vCount = 0;
-            for (Pacman::Direction d = Pacman::stay; d < 8; ++d)
+            for (Pacman::Direction d = Pacman::stay; d < Pacman::shootLeft; ++d)
                 if (gameField.ActionValid(i, d)) valid[vCount++] = d;
             gameField.actions[i] = valid[RandBetween(0, vCount)];
         }
@@ -874,7 +892,7 @@ void RandomPlay(Pacman::GameField &gameField, int myID)
 
     if (total != 0)
         actionScore[myAct + 1] +=
-            (10000 * gameField.players[myID].strength / total) / 100.0;
+            1.0 * gameField.players[myID].strength / total;
 
     // 恢复游戏状态到最初（就是本回合）
     while (count-- > 0) gameField.PopState();
