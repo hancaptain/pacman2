@@ -20,6 +20,7 @@
 #define MAX_GENERATOR_COUNT 4  // 每个象限1
 #define MAX_PLAYER_COUNT 4
 #define MAX_TURN 100
+#define MAX_DIRECTION 9
 
 using std::string;
 using std::swap;
