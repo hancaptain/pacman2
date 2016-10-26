@@ -1,21 +1,33 @@
-#define INCLUDE_CPP
+#define INCLUDE_JSONCPP_CPP
+
 #include "helper.h"
 #include "pacman.h"
 
-namespace Pacman{
+namespace Pacman
+{
     const time_t seed = time(0);
 }
+
 int main()
 {
     Pacman::GameField gameField;
+    gameField.DEBUG_STR = false;
     string data, globalData;  // 这是回合之间可以传递的信息
 
     // 如果在本地调试，有input.txt则会读取文件内容作为输入
     // 如果在平台上，则不会去检查有无input.txt
-    int myID = gameField.ReadInput(".\\input.txt", data,
+    int myID = gameField.ReadInput("input.txt", data,
                                    globalData);  // 输入，并获得自己ID
-    srand(Pacman::seed + myID + gameField.turnID);
 
+    // 自己已死
+    if (gameField.players[myID].dead)
+    {
+        gameField.WriteOutput((Pacman::Direction)(-1), "DEAD", data,
+                              globalData);
+        return 0;
+    }
+
+    srand(Pacman::seed + myID + gameField.turnID);
     // 简单随机，看哪个动作随机赢得最多
     Helpers::RandomInit();
     for (int i = 0; i < 100; i++) Helpers::RandomPlay(gameField, myID);

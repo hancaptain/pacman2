@@ -3,3 +3,4 @@ AllowShortFunctionsOnASingleLine: None
 BreakBeforeBraces: Allman
 BreakStringLiterals: false
 IndentWidth: 4
+NamespaceIndentation: All
