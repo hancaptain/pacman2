@@ -398,7 +398,7 @@ namespace Pacman
 		int len = input["requests"].size();
 
 		// 读取场地静态状况
-		Json::Value field = input["requests"][0],
+		Json::Value field = input["requests"][(Json::Value::UInt)0],
 			staticField = field["static"],  // 墙面和产生器
 			contentField = field["content"];        // 豆子和玩家
 		height = field["height"].asInt();
