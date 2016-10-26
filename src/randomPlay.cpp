@@ -1,5 +1,10 @@
-#include "pacmanHead.cpp"
+#define INCLUDE_CPP
+#include "helper.h"
+#include "pacman.h"
 
+namespace Pacman{
+    const time_t seed = time(0);
+}
 int main()
 {
     Pacman::GameField gameField;
