@@ -1,10 +1,13 @@
 #define INCLUDE_CPP
+
 #include "helper.h"
 #include "pacman.h"
 
-namespace Pacman{
+namespace Pacman
+{
     const time_t seed = time(0);
 }
+
 int main()
 {
     Pacman::GameField gameField;
