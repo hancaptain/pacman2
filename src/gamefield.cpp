@@ -520,9 +520,9 @@ namespace Pacman
     {
 #ifndef _BOTZONE_ONLINE
         ofstream fdebug("debug.txt", fstream::app);
-        fdebug
-            << "回合号【" << turnID << "】存活人数【" << aliveCount
-            << "】| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
+		fdebug
+			<< "回车号[" << turnID << "] 存活人数[" << aliveCount
+			<< "]| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
         for (int _ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             const Player &p = players[_];
