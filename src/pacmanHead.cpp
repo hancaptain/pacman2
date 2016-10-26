@@ -727,7 +727,7 @@ class GameField
         // 本地也用FastWriter好了
         // Json::StyledWriter writer;
         Json::FastWriter writer;
-        ofstream fout(".\\output.txt");
+        ofstream fout("output.txt");
         fout << writer.write(ret);
 #endif
     }
@@ -737,7 +737,7 @@ class GameField
     inline void DebugPrint() const
     {
 #ifndef _BOTZONE_ONLINE
-        ofstream fdebug(".\\debug.txt", fstream::app);
+        ofstream fdebug("debug.txt", fstream::app);
         fdebug
             << "回合号【" << turnID << "】存活人数【" << aliveCount
             << "】| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
@@ -805,7 +805,7 @@ class GameField
     inline void DebugWrite(const string &s) const
     {
 #ifndef _BOTZONE_ONLINE
-        ofstream fdebug(".\\debug.txt", fstream::app);
+        ofstream fdebug("debug.txt", fstream::app);
         fdebug << s << "\n";
 #endif
     }
@@ -882,6 +882,7 @@ void RandomPlay(Pacman::GameField &gameField, int myID)
         count++;
 
         if (!hasNext) break;
+        if (gameField.players[myID].dead) break;
     }
 
     // 计算分数
@@ -892,7 +893,8 @@ void RandomPlay(Pacman::GameField &gameField, int myID)
 
     if (total != 0)
         actionScore[myAct + 1] +=
-            1.0 * gameField.players[myID].strength / total;
+            1.0 * gameField.players[myID].strength / total *
+            (myAct == 0 ? 0.5 : (myAct >= 1 && myAct <= 4 ? 1.0 : 2.0));
 
     // 恢复游戏状态到最初（就是本回合）
     while (count-- > 0) gameField.PopState();

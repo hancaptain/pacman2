@@ -7,7 +7,7 @@ int main()
 
     // 如果在本地调试，有input.txt则会读取文件内容作为输入
     // 如果在平台上，则不会去检查有无input.txt
-    int myID = gameField.ReadInput(".\\input.txt", data,
+    int myID = gameField.ReadInput("input.txt", data,
                                    globalData);  // 输入，并获得自己ID
     srand(Pacman::seed + myID + gameField.turnID);
 

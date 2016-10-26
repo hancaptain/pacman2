@@ -20,7 +20,7 @@ int main()
 {
     ifstream fin;
     stringstream ss;
-    fin.open(".\\player0\\input.txt");
+    fin.open("player0\\input.txt");
     ss << fin.rdbuf();
     fin.close();
     string str = ss.str();
@@ -28,7 +28,7 @@ int main()
     Json::Value input;
     if (str == "")
     {
-        fin.open(".\\defaultInput.txt", ifstream::binary);
+        fin.open("defaultInput.txt", ifstream::binary);
         fin >> input;
         fin.close();
     }
@@ -40,7 +40,7 @@ int main()
         Json::Value input2;
         for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
         {
-            fin.open(".\\player" + to_string(i) + "\\output.txt",
+            fin.open("player" + to_string(i) + "\\output.txt",
                      ifstream::binary);
             fin >> input2;
             input["requests"][len][to_string(i)] = input2["response"];
@@ -52,9 +52,10 @@ int main()
     for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
     {
         input["requests"][0]["id"] = i;
-        fout.open(".\\player" + to_string(i) + "\\input.txt");
+        fout.open("player" + to_string(i) + "\\input.txt");
         fout << writer.write(input);
         fout.close();
+        system(("cd player" + to_string(i) + " & player.exe").c_str());
     }
     return 0;
 }
