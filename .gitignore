@@ -1,0 +1,5 @@
+bin/
+visual studio/
+allinone.*
+*.o
+*.exe
