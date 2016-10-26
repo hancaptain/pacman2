@@ -2120,7 +2120,7 @@ namespace Json
 
 #endif  // ifndef JSON_AMALGATED_H_INCLUDED
 
-#ifndef INCLUDE_CPP
-#define INCLUDE_CPP
+#ifndef INCLUDE_JSONCPP_CPP
+#define INCLUDE_JSONCPP_CPP
 #include "../jsoncpp.cpp"
 #endif

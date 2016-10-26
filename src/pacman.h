@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -22,14 +23,15 @@
 #define MAX_TURN 100
 #define MAX_DIRECTION 9
 
-using std::string;
-using std::swap;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::getline;
-using std::runtime_error;
-using std::setw;
+using namespace std;
+// using std::string;
+// using std::swap;
+// using std::cin;
+// using std::cout;
+// using std::endl;
+// using std::getline;
+// using std::runtime_error;
+// using std::setw;
 
 namespace Pacman
 {
@@ -177,7 +179,6 @@ namespace Pacman
         static bool constructed;
         // 场地的长和宽
         int height, width;
-        int generatorCount;
         int GENERATOR_INTERVAL, LARGE_FRUIT_DURATION, LARGE_FRUIT_ENHANCEMENT,
             SKILL_COST;
 
@@ -187,7 +188,8 @@ namespace Pacman
         // 场地格子会变化的内容
         GridContentType fieldContent[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
         int generatorTurnLeft;  // 多少回合后产生豆子
-        int aliveCount;         // 有多少玩家存活
+        int generatorCount;
+        int aliveCount;  // 有多少玩家存活
         int smallFruitCount;
         int turnID;
         FieldProp generators[MAX_GENERATOR_COUNT];  // 有哪些豆子产生器
@@ -195,6 +197,8 @@ namespace Pacman
 
         // 玩家选定的动作
         Direction actions[MAX_PLAYER_COUNT];
+
+        bool DEBUG_STR;
 
         // 恢复到上次场地状态。可以一路恢复到最开始。
         // 恢复失败（没有状态可恢复）返回false
@@ -249,14 +253,14 @@ namespace Pacman
         // 提交到平台后会被优化掉。
         void DebugPrint() const;
 
+        void DebugStr(string s) const;
+
         Json::Value SerializeCurrentTurnChange();
 
         // 初始化游戏管理器
         GameField()
         {
             constructed = true;
-
-            turnID = 0;
         }
         GameField(const GameField &b) : GameField()
         {

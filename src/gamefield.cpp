@@ -94,6 +94,7 @@ namespace Pacman
         memset(&bt, 0, sizeof(bt));
 
         // 0. 杀死不合法输入
+        // DebugStr("testN0");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &p = players[_];
@@ -127,6 +128,7 @@ namespace Pacman
         }
 
         // 1. 位置变化
+        // DebugStr("testN1");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -144,6 +146,7 @@ namespace Pacman
         }
 
         // 2. 玩家互殴
+        // DebugStr("testN2");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -202,6 +205,7 @@ namespace Pacman
         }
 
         // 2.5 金光法器
+        // DebugStr("testN2.5");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -235,6 +239,7 @@ namespace Pacman
         }
 
         // *. 检查一遍有无死亡玩家
+        // DebugStr("testN2.*");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -252,6 +257,7 @@ namespace Pacman
         }
 
         // 3. 产生豆子
+        // DebugStr("testN3");
         if (--generatorTurnLeft == 0)
         {
             generatorTurnLeft = GENERATOR_INTERVAL;
@@ -274,6 +280,7 @@ namespace Pacman
         }
 
         // 4. 吃掉豆子
+        // DebugStr("testN4");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -306,6 +313,7 @@ namespace Pacman
         }
 
         // 5. 大豆回合减少
+        // DebugStr("testN5");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -323,6 +331,7 @@ namespace Pacman
         }
 
         // *. 检查一遍有无死亡玩家
+        // DebugStr("testN6");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -342,6 +351,7 @@ namespace Pacman
         ++turnID;
 
         // 是否只剩一人？
+        // DebugStr("testN7");
         if (aliveCount <= 1)
         {
             for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
@@ -372,25 +382,33 @@ namespace Pacman
     int GameField::ReadInput(const char *localFileName, string &obtainedData,
                              string &obtainedGlobalData)
     {
+        // DebugStr("test0");
         string str, chunk;
 #ifdef _BOTZONE_ONLINE
-        std::ios::sync_with_stdio(false);  //ω\\)
+        ios::sync_with_stdio(false);  //ω\\)
         getline(cin, str);
 #else
         if (localFileName)
         {
-            std::ifstream fin(localFileName);
+            ifstream fin(localFileName);
             if (fin)
-                while (getline(fin, chunk) && chunk != "") str += chunk;
+            {
+                // while (getline(fin, chunk) && chunk != "") str += chunk;
+                stringstream ss;
+                ss << fin.rdbuf();
+                str = ss.str();
+            }
             else
-                while (getline(cin, chunk) && chunk != "") str += chunk;
+                cout << "input file not found" << endl;
         }
         else
             while (getline(cin, chunk) && chunk != "") str += chunk;
 #endif
+        // DebugStr("test1");
         Json::Reader reader;
         Json::Value input;
         reader.parse(str, input);
+        // DebugStr("test2");
 
         int len = input["requests"].size();
 
@@ -406,7 +424,9 @@ namespace Pacman
         generatorTurnLeft = GENERATOR_INTERVAL =
             field["GENERATOR_INTERVAL"].asInt();
 
+        // DebugStr("test3");
         PrepareInitialField(staticField, contentField);
+        // DebugStr("test4");
 
         // 根据历史恢复局面
         for (int i = 1; i < len; i++)
@@ -418,6 +438,7 @@ namespace Pacman
                         (Direction)req[playerID2str[_]]["action"].asInt();
             NextTurn();
         }
+        // DebugStr("test5");
 
         obtainedData = input["data"].asString();
         obtainedGlobalData = input["globaldata"].asString();
@@ -430,6 +451,7 @@ namespace Pacman
                                         const Json::Value &contentField)
     {
         int r, c, gid = 0;
+        turnID = 0;
         generatorCount = 0;
         aliveCount = 0;
         smallFruitCount = 0;
@@ -487,7 +509,7 @@ namespace Pacman
         // 本地也用FastWriter好了
         // Json::StyledWriter writer;
         Json::FastWriter writer;
-        std::ofstream fout("output.txt");
+        ofstream fout("output.txt");
         fout << writer.write(ret);
 #endif
     }
@@ -497,7 +519,7 @@ namespace Pacman
     void GameField::DebugPrint() const
     {
 #ifndef _BOTZONE_ONLINE
-        std::ofstream fdebug("debug.txt", std::fstream::app);
+        ofstream fdebug("debug.txt", fstream::app);
         fdebug
             << "回合号【" << turnID << "】存活人数【" << aliveCount
             << "】| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
@@ -509,8 +531,7 @@ namespace Pacman
                    << (p.dead ? "死亡" : "存活") << "]\n";
         }
         fdebug << "  ";
-        for (int c = 0; c < width; c++)
-            fdebug << " " << std::setw(2) << c << " ";
+        for (int c = 0; c < width; c++) fdebug << " " << setw(2) << c << " ";
         fdebug << "\n";
         for (int r = 0; r < height; r++)
         {
@@ -521,7 +542,7 @@ namespace Pacman
                 fdebug << ((fieldStatic[r][c] & wallNorth) ? "---" : "   ");
             }
             fdebug << "\n";
-            fdebug << std::setw(2) << r;
+            fdebug << setw(2) << r;
             for (int c = 0; c < width; c++)
             {
                 fdebug << ((fieldStatic[r][c] & wallWest) ? "|" : " ") << " ";
@@ -559,6 +580,17 @@ namespace Pacman
                                                                 : "   ");
         }
         fdebug << "\n\n";
+#endif
+    }
+
+    void GameField::DebugStr(string s) const
+    {
+#ifndef _BOTZONE_ONLINE
+        if (DEBUG_STR)
+        {
+            cout << s << endl;
+            cout << "turnID " << turnID << endl;
+        }
 #endif
     }
 

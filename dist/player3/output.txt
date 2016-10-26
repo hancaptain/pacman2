@@ -1,1 +1,1 @@
-{"data":"","globaldata":"","response":{"action":-1,"tauntText":""}}
+{"data":"","globaldata":"","response":{"action":-1,"tauntText":"DEAD"}}
