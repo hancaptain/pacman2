@@ -1,10 +1,14 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <deque>
 #include "pacman.h"
 
 using namespace Pacman;
+
+///////////////////////////////////////////////////////////////////////////////
+// module distance
+// by wd
 
 #define FIELD(a, r, c) *((a) + (r)*width + (c))
 #define DISTANCE(a, r1, c1, r2, c2) \
@@ -43,6 +47,7 @@ void floyd(GameField& gameField, int* array)
                                 DISTANCE(array, r1, c1, r2, c2) = temp;
                         }
 }
+
 // return the first move from (r1, c1) to (r2, c2)
 // return stay when an error occurs
 Direction dijkstra(GameField& gameField, int r1, int c1, int r2, int c2)
@@ -111,6 +116,54 @@ Direction routine_floyd(GameField& gameField, int r1, int c1, int r2, int c2,
                 break;
         }
     return Direction(d);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// module dead road
+// by wd
+
+bool isDeadRoad[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+bool scannedDeadRoad[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+int wallCount[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+
+void scanDeadRoad(GameField& gameField, int row, int col, int level)
+{
+    if (scannedDeadRoad[row][col]) return;
+    // for (int i = 0; i < level; ++i) cout << " ";
+    // cout << row << " " << col << " "
+    // << gameField.fieldStatic[row][col] << endl;
+    scannedDeadRoad[row][col] = true;
+
+    int nowWallCount = 0;  // 旁边的墙或死路
+    for (int d = 0; d < 4; ++d)
+    {
+        if (gameField.fieldStatic[row][col] & (1 << d))
+            ++nowWallCount;
+        else
+        {
+            int newRow = (row + dy[d] + gameField.height) % gameField.height;
+            int newCol = (col + dx[d] + gameField.width) % gameField.width;
+            scanDeadRoad(gameField, newRow, newCol, level + 1);
+            if (isDeadRoad[newRow][newCol]) ++nowWallCount;
+        }
+    }
+    if (nowWallCount >= 3) isDeadRoad[row][col] = true;
+    wallCount[row][col] = nowWallCount;
+}
+
+void scanAllDeadRoad(GameField& gameField)
+{
+    memset(&isDeadRoad, 0, sizeof(isDeadRoad));
+    // 从左上角和右下角各floodfill一次，如果只做一次在初始位置附近会出问题
+    memset(&scannedDeadRoad, 0, sizeof(scannedDeadRoad));
+    for (int i = 0; i < gameField.height; ++i)
+        for (int j = 0; j < gameField.width; ++j)
+            scanDeadRoad(gameField, i, j, 0);
+    memset(&scannedDeadRoad, 0, sizeof(scannedDeadRoad));
+    for (int i = 0; i < gameField.height; ++i)
+        for (int j = 0; j < gameField.width; ++j)
+            scanDeadRoad(gameField, gameField.height - i, gameField.height - j,
+                         0);
 }
 
 #endif

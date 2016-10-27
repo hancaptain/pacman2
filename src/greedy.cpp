@@ -2,11 +2,13 @@
 // Go to the nearest of beans which the player is the nearest player to them.
 
 #include "pacman.h"
-#include "util.h"
+#include "utils.h"
+
+using namespace Pacman;
 
 int main()
 {
-    Pacman::GameField gameField;
+    GameField gameField;
 #ifdef DEFINE_DEBUG_STR
     gameField.DEBUG_STR = false;
 #endif
@@ -18,7 +20,7 @@ int main()
     // ×Ô¼ºÒÑËÀ
     if (gameField.players[myID].dead)
     {
-        gameField.WriteOutput((Pacman::Direction)(-1), "DEAD", data,
+        gameField.WriteOutput((Direction)(-1), "DEAD", data,
                               globalData);
         return 0;
     }
@@ -62,8 +64,6 @@ int main()
         choice = stay;
 
     gameField.DebugPrint();
-
     gameField.WriteOutput(choice, "", data, globalData);
-
     return 0;
 }
