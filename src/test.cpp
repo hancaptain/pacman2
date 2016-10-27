@@ -8,11 +8,13 @@ int main() {
 	int width = gameField.width; //c
 	int *a = (int *)malloc(sizeof(int)*height*height*width*width);
 	floyd(gameField, a);
-	for (int r = 0; r < height; r++) {
+	/*for (int r = 0; r < height; r++) {
 		for (int c = 0; c < width; c++)
 			cout << DISTANCE(a, 2, 3, r, c) << '\t';
 		cout << endl;
-	}
-	cout << dijkstra(gameField, 5, 3, 0, 0) << endl;
-	cout << dijkstra(gameField, 5, 3, 10, 0) << endl;
+	}*/
+	for (int r = 0; r < gameField.height; r++)
+		for (int c = 0; c < gameField.width; c++)
+			if (routine_floyd(gameField, r, c, 3, 3, a) != dijkstra(gameField, r, c, 3, 3)) cout << "error on (" << r << ", " << c << ")" << endl;
+	cout << "test end" << endl;
 }

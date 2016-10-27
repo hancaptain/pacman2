@@ -55,3 +55,16 @@ done:
 	}
 	return (Direction)predirection[r][c];
 }
+
+Direction routine_floyd(GameField& gameField, int r1, int c1, int r2, int c2, int *array) {
+	if (gameField.fieldStatic[r1][c1] & generator || gameField.fieldStatic[r2][c2] & generator || (r1 == r2&&c1 == c2)) return stay;
+	int height = gameField.height; //r
+	int width = gameField.width; //c
+	int d;
+	for (d = 0; d < 4; d++)
+		if (!(gameField.fieldStatic[r1][c1] & direction2OpposingWall[d])) {
+			int nr = (r1 + dy[d] + height) % height, nc = (c1 + dx[d] + width) % width;
+			if (DISTANCE(array, r2, c2, r1, c1) == DISTANCE(array, r2, c2, nr, nc) + 1) break;
+		}
+	return Direction(d);
+}

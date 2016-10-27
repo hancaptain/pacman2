@@ -17,4 +17,8 @@ void floyd(GameField& gameField, int* array);
 //return stay when an error occurs
 Direction dijkstra(GameField& gameField, int r1, int c1, int r2, int c2);
 
+//return the first move, make use of the result of floyd
+//in O(1) time
+Direction routine_floyd(GameField& gameField, int r1, int c1, int r2, int c2, int *array);
+
 #endif
