@@ -414,7 +414,7 @@ namespace MCTS
             {
                 select(s, rootNode);
                 now_time = clock();
-                if ((double)(now_time - start_time) / CLOCKS_PER_SEC > 0.96)
+                if ((double)(now_time - start_time) / CLOCKS_PER_SEC > 0.1) // EDITED 0.96
                     break;
             }
 

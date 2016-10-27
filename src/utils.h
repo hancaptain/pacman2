@@ -8,7 +8,10 @@ using namespace Pacman;
 
 ///////////////////////////////////////////////////////////////////////////////
 // module distance
-// by wd
+// by cp
+
+#define DISTANCE_NEAR_ENEMY 2
+#define INFINITY_DISTANCE 1000
 
 #define FIELD(a, r, c) *((a) + (r)*width + (c))
 #define DISTANCE(a, r1, c1, r2, c2) \
@@ -16,7 +19,8 @@ using namespace Pacman;
 
 // array is width * height * width * height
 // array[r1][c1][r2][c2] means the shortest distance from (r1, c1) to (r2, c2)
-void floyd(GameField& gameField, int* array)
+// add considerEnemy by wd
+void floyd(GameField& gameField, int* array, bool considerEnemy = true)
 {
     int height = gameField.height;  // r
     int width = gameField.width;    // c
@@ -28,11 +32,31 @@ void floyd(GameField& gameField, int* array)
         {
             GridStaticType& type = gameField.fieldStatic[r][c];
             DISTANCE(array, r, c, r, c) = 0;
-            for (int i = 0; i < 4; i++)
-                if (!(type & direction2OpposingWall[i]))
-                    DISTANCE(array, r, c, (r + dy[i] + height) % height,
-                             (c + dx[i] + width) % width) = 1;
+            for (int d = 0; d < 4; d++)
+                if (!(type & direction2OpposingWall[d]))
+                    DISTANCE(array, r, c, (r + dy[d] + height) % height,
+                             (c + dx[d] + width) % width) = 1;
         }
+
+    if (considerEnemy)
+    {
+        for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+        {
+            if (i == gameField.myID) continue;
+            Player& _p = gameField.players[i];
+            if (_p.dead) continue;
+            if (_p.strength < gameField.players[gameField.myID].strength)
+                continue;
+            int r = _p.row;
+            int c = _p.col;
+            GridStaticType& type = gameField.fieldStatic[r][c];
+            for (int d = 0; d < 4; ++d)
+                if (!(type & direction2OpposingWall[d]))
+                    DISTANCE(array, r, c, (r + dy[d] + height) % height,
+                             (c + dx[d] + width) % width) +=
+                        DISTANCE_NEAR_ENEMY;
+        }
+    }
 
     for (rt = 0; rt < height; rt++)
         for (ct = 0; ct < width; ct++)
@@ -48,57 +72,58 @@ void floyd(GameField& gameField, int* array)
                         }
 }
 
+// DEPRECATED
 // return the first move from (r1, c1) to (r2, c2)
 // return stay when an error occurs
-Direction dijkstra(GameField& gameField, int r1, int c1, int r2, int c2)
-{
-    int height = gameField.height;
-    int width = gameField.width;
-    if (gameField.fieldStatic[r1][c1] & generator ||
-        gameField.fieldStatic[r2][c2] & generator || (r1 == c1 && r2 == c2))
-        return stay;
-    int predirection[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
-    int dis[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
-    memset(dis, 0x33, sizeof(dis));
-    dis[r1][c1] = 0;
-    deque<int> row = {r1}, col = {c1};
-    while (row.size())
-    {
-        int r = row.front(), c = col.front();
-        row.pop_front();
-        col.pop_front();
-        for (int d = 0; d < 4; d++)
-            if (!(gameField.fieldStatic[r][c] & direction2OpposingWall[d]))
-            {
-                int nr = (r + dy[d] + height) % height,
-                    nc = (c + dx[d] + width) % width;
-                if (dis[nr][nc] > 1000)
-                {
-                    dis[nr][nc] = dis[r][c] + 1;
-                    predirection[nr][nc] = d;
-                    row.push_back(nr);
-                    col.push_back(nc);
-                    if (nr == r2 && nc == c2) goto done;
-                }
-            }
-    }
-    return stay;
-done:
-    int r = r2, c = c2;
-    while (dis[r][c] > 1)
-    {
-        int rr = (r - dy[predirection[r][c]] + height) % height;
-        int cc = (c - dx[predirection[r][c]] + width) % width;
-        r = rr;
-        c = cc;
-    }
-    return (Direction)predirection[r][c];
-}
+// Direction dijkstra(GameField& gameField, int r1, int c1, int r2, int c2)
+// {
+// int height = gameField.height;
+// int width = gameField.width;
+// if (gameField.fieldStatic[r1][c1] & generator ||
+// gameField.fieldStatic[r2][c2] & generator || (r1 == c1 && r2 == c2))
+// return stay;
+// int predirection[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+// int dis[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+// memset(dis, 0x33, sizeof(dis));
+// dis[r1][c1] = 0;
+// deque<int> row = {r1}, col = {c1};
+// while (row.size())
+// {
+// int r = row.front(), c = col.front();
+// row.pop_front();
+// col.pop_front();
+// for (int d = 0; d < 4; d++)
+// if (!(gameField.fieldStatic[r][c] & direction2OpposingWall[d]))
+// {
+// int nr = (r + dy[d] + height) % height,
+// nc = (c + dx[d] + width) % width;
+// if (dis[nr][nc] > 1000)
+// {
+// dis[nr][nc] = dis[r][c] + 1;
+// predirection[nr][nc] = d;
+// row.push_back(nr);
+// col.push_back(nc);
+// if (nr == r2 && nc == c2) goto done;
+// }
+// }
+// }
+// return stay;
+// done:
+// int r = r2, c = c2;
+// while (dis[r][c] > 1)
+// {
+// int rr = (r - dy[predirection[r][c]] + height) % height;
+// int cc = (c - dx[predirection[r][c]] + width) % width;
+// r = rr;
+// c = cc;
+// }
+// return (Direction)predirection[r][c];
+// }
 
 // return the first move, make use of the result of floyd
 // in O(1) time
-Direction routine_floyd(GameField& gameField, int r1, int c1, int r2, int c2,
-                        int* array)
+Direction routineFloyd(GameField& gameField, int r1, int c1, int r2, int c2,
+                       int* array)
 {
     if (gameField.fieldStatic[r1][c1] & generator ||
         gameField.fieldStatic[r2][c2] & generator || (r1 == r2 && c1 == c2))
@@ -137,7 +162,7 @@ void scanDeadRoad(GameField& gameField, int row, int col, int level)
     int nowWallCount = 0;  // 旁边的墙或死路
     for (int d = 0; d < 4; ++d)
     {
-        if (gameField.fieldStatic[row][col] & (1 << d))
+        if (gameField.fieldStatic[row][col] & direction2OpposingWall[d])
             ++nowWallCount;
         else
         {
@@ -164,6 +189,93 @@ void scanAllDeadRoad(GameField& gameField)
         for (int j = 0; j < gameField.width; ++j)
             scanDeadRoad(gameField, gameField.height - i, gameField.height - j,
                          0);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// module shoot
+// by wd
+
+// 根据坐标判断射击的方向
+// 如果不能射到，输出stay
+// f是射击者，t是被射者
+// TODO：考虑一次射多人
+Direction shootDirection(GameField& gameField, int fr, int fc, int tr, int tc)
+{
+    bool canShoot;
+    int height = gameField.height;
+    int width = gameField.width;
+    if (fc == tc)
+    {
+        canShoot = true;
+        for (int i = fr; i != tr; i = (i - 1 + height) % height)
+        {
+            if (gameField.fieldStatic[i][fc] & wallNorth)
+            {
+                canShoot = false;
+                break;
+            }
+        }
+        if (canShoot) return shootUp;
+
+        canShoot = true;
+        for (int i = fr; i != tr; i = (i + 1 + height) % height)
+        {
+            if (gameField.fieldStatic[i][fc] & wallSouth)
+            {
+                canShoot = false;
+                break;
+            }
+        }
+        if (canShoot) return shootDown;
+    }
+    if (fr == tr)
+    {
+        canShoot = true;
+        for (int i = fc; i != tc; i = (i - 1 + width) % width)
+        {
+            if (gameField.fieldStatic[fr][i] & wallWest)
+            {
+                canShoot = false;
+                break;
+            }
+        }
+        if (canShoot) return shootLeft;
+
+        canShoot = true;
+        for (int i = fc; i != tc; i = (i + 1 + width) % width)
+        {
+            if (gameField.fieldStatic[fr][i] & wallEast)
+            {
+                canShoot = false;
+                break;
+            }
+        }
+        if (canShoot) return shootRight;
+    }
+    return stay;
+}
+
+Direction shootMustHit(GameField& gameField, int fr, int fc, int tr, int tc)
+{
+    Direction d = shootDirection(gameField, fr, fc, tr, tc);
+    if (d == stay)
+        return stay;
+    else if (d == shootUp || d == shootDown)
+    {
+        if (gameField.fieldStatic[tr][tc] & wallWest &&
+            gameField.fieldStatic[tr][tc] & wallEast)
+            return d;
+        else
+            return stay;
+    }
+    else if (d == shootLeft | d == shootRight)
+    {
+        if (gameField.fieldStatic[tr][tc] & wallNorth &&
+            gameField.fieldStatic[tr][tc] & wallSouth)
+            return d;
+        else
+            return stay;
+    }
 }
 
 #endif

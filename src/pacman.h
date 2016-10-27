@@ -224,16 +224,19 @@ namespace Pacman
         int generatorCount;
         int GENERATOR_INTERVAL, LARGE_FRUIT_DURATION, LARGE_FRUIT_ENHANCEMENT,
             SKILL_COST;
+        int myID;
 
         // 场地格子固定的内容
         GridStaticType fieldStatic[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
 
         // 场地格子会变化的内容
         GridContentType fieldContent[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+
         int generatorTurnLeft;  // 多少回合后产生豆子
         int aliveCount;         // 有多少玩家存活
         int smallFruitCount;
         int turnID;
+
         FieldProp generators[MAX_GENERATOR_COUNT];  // 有哪些豆子产生器
         Player players[MAX_PLAYER_COUNT];           // 有哪些玩家
 
@@ -672,7 +675,8 @@ namespace Pacman
             obtainedData = input["data"].asString();
             obtainedGlobalData = input["globaldata"].asString();
 
-            return field["id"].asInt();
+            myID = field["id"].asInt();
+            return myID;
         }
 
         // 根据 static 和 content 数组准备场地的初始状况

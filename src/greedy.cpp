@@ -32,7 +32,7 @@ int main()
     int* a = (int*)malloc(sizeof(int) * height * height * width * width);
     floyd(gameField, a);
 
-    int mindis = 1000;
+    int minDis = 1000;
     int r1, c1;
     for (int r = 0; r < height; r++)
         for (int c = 0; c < width; c++)
@@ -49,16 +49,16 @@ int main()
                                            gameField.players[i].col);
                             id = i;
                         }
-                if (id == myID && dis < mindis)
+                if (id == myID && dis < minDis)
                 {
-                    mindis = dis;
+                    minDis = dis;
                     r1 = r;
                     c1 = c;
                 }
             }
 
-    if (mindis < 1000)
-        choice = routine_floyd(gameField, gameField.players[myID].row,
+    if (minDis < 1000)
+        choice = routineFloyd(gameField, gameField.players[myID].row,
                                gameField.players[myID].col, r1, c1, a);
     else
         choice = stay;
