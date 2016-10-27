@@ -2,9 +2,7 @@
 // by wd
 //
 // 适用于Windows系统
-// 将server.exe，defaultInput.txt放在dist文件夹下
-// 每个玩家分别有一个文件夹为player0~3，放在dist文件夹下
-// 里面有player.exe，input.txt，output.txt，debug.txt
+// 运行环境见dist文件夹
 // defaultInput.txt中没有玩家的id，由server.exe添加
 
 #define INCLUDE_CPP
@@ -19,7 +17,7 @@ int main()
     Json::Reader reader;
     Json::FastWriter writer;
 
-    cout << " 1 1111" << endl;
+    cout << " 0 1111" << endl;
 
     // 初始化每个玩家的输入，清空output.txt，debug.txt，第一次运行该玩家
     fin.open("defaultInput.txt", ifstream::binary);
