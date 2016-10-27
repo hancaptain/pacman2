@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#define INCLUDE_JSONCPP_CPP
+#define INCLUDE_CPP
 #include "pacman.h"
 using namespace Pacman;
 

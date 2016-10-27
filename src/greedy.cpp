@@ -1,4 +1,4 @@
-#define INCLUDE_JSONCPP_CPP
+#define INCLUDE_CPP
 
 
 #include "pacman.h"
