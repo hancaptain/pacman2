@@ -1,0 +1,5 @@
+input.txt
+output.txt
+debug.txt
+src/*.exe
+src/*.o

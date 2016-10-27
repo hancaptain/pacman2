@@ -7,7 +7,7 @@
 // 里面有player.exe，input.txt，output.txt，debug.txt
 // defaultInput.txt中没有玩家的id，由server.exe添加
 
-#define INCLUDE_JSONCPP_CPP
+#define INCLUDE_CPP
 
 #include "pacman.h"
 
