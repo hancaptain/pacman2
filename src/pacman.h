@@ -173,6 +173,9 @@ namespace Pacman
     class GameField
     {
        public:
+#define DEFINE_DEBUG_STR
+        bool DEBUG_STR;
+
         // 记录每回合的变化（栈）
         TurnStateTransfer backtrack[MAX_TURN];
         // 这个对象是否已经创建
@@ -197,8 +200,6 @@ namespace Pacman
 
         // 玩家选定的动作
         Direction actions[MAX_PLAYER_COUNT];
-
-        bool DEBUG_STR;
 
         // 恢复到上次场地状态。可以一路恢复到最开始。
         // 恢复失败（没有状态可恢复）返回false
@@ -261,6 +262,7 @@ namespace Pacman
         GameField()
         {
             constructed = true;
+            DEBUG_STR = false;
         }
         GameField(const GameField &b) : GameField()
         {

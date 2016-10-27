@@ -11,7 +11,10 @@ namespace Pacman
 int main()
 {
     Pacman::GameField gameField;
-    gameField.DEBUG_STR = false;
+#ifdef DEFINE_DEBUG_STR
+    gameField.DEBUG_STR = false;  // 设为true时GameField::DebugStr才有效
+#endif
+
     string data, globalData;  // 这是回合之间可以传递的信息
 
     // 如果在本地调试，有input.txt则会读取文件内容作为输入

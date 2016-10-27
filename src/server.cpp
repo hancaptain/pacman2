@@ -15,12 +15,11 @@ int main()
 {
     ifstream fin;
     ofstream fout;
-    Json::Value input;
+    Json::Value input, input2;  // 存储输入和每个玩家的输出
     Json::Reader reader;
     Json::FastWriter writer;
-    Pacman::GameField gameField;
-    gameField.DEBUG_STR = false;
-    string data, globalData;  // 这是回合之间可以传递的信息
+
+    cout << " 1 1111" << endl;
 
     // 初始化每个玩家的输入，清空output.txt，debug.txt，第一次运行该玩家
     fin.open("defaultInput.txt", ifstream::binary);
@@ -35,7 +34,6 @@ int main()
         fout.open("player" + to_string(i) + "\\input.txt");
         fout << writer.write(input);
         fout.close();
-
         fout.open("player" + to_string(i) + "\\output.txt");
         fout.close();
         fout.open("player" + to_string(i) + "\\debug.txt");
@@ -45,42 +43,30 @@ int main()
     }
 
     // 循环运行回合
-    for (int count = 2; count < MAX_TURN; ++count)
+    for (int count = 1; count < MAX_TURN; ++count)
     {
-        cout << count << endl;
-
-        // 这里有BUG。。
-        // 判断玩家死亡情况
-        // gameField.ReadInput("player0\\input.txt", data, globalData);
-        // cout << gameField.turnID << " " << gameField.aliveCount << " ";
-        // for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
-        // {
-        // cout << gameField.players[i].dead;
-        // }
-        // cout << endl;
-        // if (gameField.aliveCount <= 1) break;
-
-        // 读取之前的输入
-        fin.open("player0\\input.txt", ifstream::binary);
-        fin >> input;
-        fin.close();
-
-        int len = input["requests"].size();
-        // input["requests"][len]["turnID"] = gameField.turnID;
-        input["requests"][len]["turnID"] = count;
+        cout << setw(2) << count << " ";
+        input["requests"][count]["turnID"] = count;
 
         // 读取每个玩家的输出，添加到下次的输入
-        Json::Value input2;
+        // 第(i - 1)回合输出的动作在第i回合执行，放在input["requests"][i]
         int aliveCount = 0;
         for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
         {
             fin.open("player" + to_string(i) + "\\output.txt",
                      ifstream::binary);
             fin >> input2;
-            input["requests"][len][to_string(i)] = input2["response"];
+            input["requests"][count][to_string(i)] = input2["response"];
             fin.close();
 
-            if (input["requests"][len][to_string(i)]["tauntText"] != "DEAD")
+            // 玩家在tauntText输出SERVER_STOP会让服务器直接停止，用于调试
+            if (input2["response"]["tauntText"] == "SERVER_STOP")
+            {
+                cout << endl << "SERVER_STOP" << endl;
+                return 1;
+            }
+
+            if (input2["response"]["tauntText"] != "DEAD")
             {
                 cout << 1;
                 ++aliveCount;
@@ -101,8 +87,7 @@ int main()
             fout << writer.write(input);
             fout.close();
 
-            // if (!gameField.players[i].dead)
-            if (input["requests"][len][to_string(i)]["tauntText"] != "DEAD")
+            if (input["requests"][count][to_string(i)]["tauntText"] != "DEAD")
             {
                 system(("cd player" + to_string(i) + " & player.exe").c_str());
             }
