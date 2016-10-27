@@ -648,7 +648,7 @@ namespace Pacman
             int len = input["requests"].size();
 
             // 读取场地静态状况
-            Json::Value field = input["requests"][0],
+            Json::Value field = input["requests"][(Json::Value::UInt)0],
                         staticField = field["static"],  // 墙面和产生器
                 contentField = field["content"];        // 豆子和玩家
             height = field["height"].asInt();
@@ -754,8 +754,8 @@ namespace Pacman
 #ifndef _BOTZONE_ONLINE
             ofstream fdebug(".\\debug.txt", fstream::app);
             fdebug
-                << "回合号【" << turnID << "】存活人数【" << aliveCount
-                << "】| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
+                << "回合号[" << turnID << "]存活人数[" << aliveCount
+                << "]| 图例 产生器[G] 有玩家[0/1/2/3] 多个玩家[*] 大豆[o] 小豆[.]\n";
             for (int _ = 0; _ < MAX_PLAYER_COUNT; _++)
             {
                 const Player &p = players[_];
@@ -849,7 +849,7 @@ namespace Pacman
         {
             if (constructed)
                 throw runtime_error(
-                    "请不要再创建 GameField 对象了，整个程序中只应该有一个对象");
+                    "One GameField Only");
             constructed = true;
             DEBUG_STR = false;
         }
