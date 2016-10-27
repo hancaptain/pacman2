@@ -1,5 +1,5 @@
 all: CXXFLAGS += -std=c++11
-all: greedy.exe randomplay.exe server.exe testPlayer.exe copyexe.bat
+all: Foreseeable_Amadeus_edited.exe greedy.exe randomplay.exe server.exe testPlayer.exe copyexe.bat
 
 copyexe.bat: randomplay.exe server.exe
 	./copyexe.bat
