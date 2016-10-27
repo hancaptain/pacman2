@@ -94,7 +94,6 @@ namespace Pacman
         memset(&bt, 0, sizeof(bt));
 
         // 0. 杀死不合法输入
-        // DebugStr("testN0");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &p = players[_];
@@ -128,7 +127,6 @@ namespace Pacman
         }
 
         // 1. 位置变化
-        // DebugStr("testN1");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -146,7 +144,6 @@ namespace Pacman
         }
 
         // 2. 玩家互殴
-        // DebugStr("testN2");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -205,7 +202,6 @@ namespace Pacman
         }
 
         // 2.5 金光法器
-        // DebugStr("testN2.5");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -239,7 +235,6 @@ namespace Pacman
         }
 
         // *. 检查一遍有无死亡玩家
-        // DebugStr("testN2.*");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -257,7 +252,6 @@ namespace Pacman
         }
 
         // 3. 产生豆子
-        // DebugStr("testN3");
         if (--generatorTurnLeft == 0)
         {
             generatorTurnLeft = GENERATOR_INTERVAL;
@@ -280,7 +274,6 @@ namespace Pacman
         }
 
         // 4. 吃掉豆子
-        // DebugStr("testN4");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -313,7 +306,6 @@ namespace Pacman
         }
 
         // 5. 大豆回合减少
-        // DebugStr("testN5");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -331,7 +323,6 @@ namespace Pacman
         }
 
         // *. 检查一遍有无死亡玩家
-        // DebugStr("testN6");
         for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
         {
             Player &_p = players[_];
@@ -351,7 +342,6 @@ namespace Pacman
         ++turnID;
 
         // 是否只剩一人？
-        // DebugStr("testN7");
         if (aliveCount <= 1)
         {
             for (_ = 0; _ < MAX_PLAYER_COUNT; _++)
@@ -382,7 +372,6 @@ namespace Pacman
     int GameField::ReadInput(const char *localFileName, string &obtainedData,
                              string &obtainedGlobalData)
     {
-        // DebugStr("test0");
         string str, chunk;
 #ifdef _BOTZONE_ONLINE
         ios::sync_with_stdio(false);  //ω\\)
@@ -404,11 +393,9 @@ namespace Pacman
         else
             while (getline(cin, chunk) && chunk != "") str += chunk;
 #endif
-        // DebugStr("test1");
         Json::Reader reader;
         Json::Value input;
         reader.parse(str, input);
-        // DebugStr("test2");
 
         int len = input["requests"].size();
 
@@ -424,9 +411,7 @@ namespace Pacman
         generatorTurnLeft = GENERATOR_INTERVAL =
             field["GENERATOR_INTERVAL"].asInt();
 
-        // DebugStr("test3");
         PrepareInitialField(staticField, contentField);
-        // DebugStr("test4");
 
         // 根据历史恢复局面
         for (int i = 1; i < len; i++)
@@ -438,7 +423,6 @@ namespace Pacman
                         (Direction)req[playerID2str[_]]["action"].asInt();
             NextTurn();
         }
-        // DebugStr("test5");
 
         obtainedData = input["data"].asString();
         obtainedGlobalData = input["globaldata"].asString();
@@ -500,7 +484,7 @@ namespace Pacman
         ret["response"]["tauntText"] = tauntText;
         ret["data"] = data;
         ret["globaldata"] = globalData;
-//   ret["debug"] = (Json::Int)seed;
+// ret["debug"] = (Json::Int)seed;
 
 #ifdef _BOTZONE_ONLINE
         Json::FastWriter writer;

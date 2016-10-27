@@ -1,4 +1,4 @@
-#define INCLUDE_JSONCPP_CPP
+#define INCLUDE_CPP
 
 #include "helper.h"
 #include "pacman.h"
@@ -11,13 +11,16 @@ namespace Pacman
 int main()
 {
     Pacman::GameField gameField;
-    gameField.DEBUG_STR = false;
+#ifdef DEFINE_DEBUG_STR
+    gameField.DEBUG_STR = false;  // 设为true时GameField::DebugStr才有效
+#endif
+
     string data, globalData;  // 这是回合之间可以传递的信息
 
+    // 输入，并获得自己ID
     // 如果在本地调试，有input.txt则会读取文件内容作为输入
     // 如果在平台上，则不会去检查有无input.txt
-    int myID = gameField.ReadInput("input.txt", data,
-                                   globalData);  // 输入，并获得自己ID
+    int myID = gameField.ReadInput("input.txt", data, globalData);
 
     // 自己已死
     if (gameField.players[myID].dead)

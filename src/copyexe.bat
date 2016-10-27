@@ -1,4 +1,4 @@
-copy randomPlay.exe ..\dist\player0\player.exe /y
+copy testPlayer.exe ..\dist\player0\player.exe /y
 copy randomPlay.exe ..\dist\player1\player.exe /y
 copy randomPlay.exe ..\dist\player2\player.exe /y
 copy randomPlay.exe ..\dist\player3\player.exe /y

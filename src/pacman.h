@@ -1,3 +1,39 @@
+// namespace Pacman
+// by cp
+
+// Pacman2 样例程序
+// 作者：zhouhy
+// 时间：2016/10/12 12:54
+//
+// 【命名惯例】
+// r/R/y/Y：Row，行，纵坐标
+// c/C/x/X：Column，列，横坐标
+// 数组的下标都是[y][x]或[r][c]的顺序
+// 玩家编号0123
+//
+// 【坐标系】
+//   0 1 2 3 4 5 6 7 8
+// 0 +----------------> x
+// 1 |
+// 2 |
+// 3 |
+// 4 |
+// 5 |
+// 6 |
+// 7 |
+// 8 |
+//   v y
+//
+// 【提示】你可以使用
+// #ifndef _BOTZONE_ONLINE
+// 这样的预编译指令来区分在线评测和本地评测
+//
+// 【提示】一般的文本编辑器都会支持将代码块折叠起来
+// 如果你觉得自带代码太过冗长，可以考虑将整个namespace折叠
+//
+// edit by wd
+// 修改了DebugPrint使之输出到debug.txt
+
 #ifndef PACMAN_H
 #define PACMAN_H
 
@@ -173,6 +209,9 @@ namespace Pacman
     class GameField
     {
        public:
+#define DEFINE_DEBUG_STR
+        bool DEBUG_STR;
+
         // 记录每回合的变化（栈）
         TurnStateTransfer backtrack[MAX_TURN];
         // 这个对象是否已经创建
@@ -197,8 +236,6 @@ namespace Pacman
 
         // 玩家选定的动作
         Direction actions[MAX_PLAYER_COUNT];
-
-        bool DEBUG_STR;
 
         // 恢复到上次场地状态。可以一路恢复到最开始。
         // 恢复失败（没有状态可恢复）返回false
@@ -261,6 +298,7 @@ namespace Pacman
         GameField()
         {
             constructed = true;
+            DEBUG_STR = false;
         }
         GameField(const GameField &b) : GameField()
         {
