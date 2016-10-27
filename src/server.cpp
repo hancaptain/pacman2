@@ -5,8 +5,6 @@
 // 运行环境见dist文件夹
 // defaultInput.txt中没有玩家的id，由server.exe添加
 
-#define INCLUDE_CPP
-
 #include "pacman.h"
 
 int main()

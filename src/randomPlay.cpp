@@ -1,18 +1,16 @@
-#define INCLUDE_CPP
-
 #include "helper.h"
 #include "pacman.h"
 
-namespace Pacman
-{
-    const time_t seed = time(0);
-}
+// namespace Pacman
+// {
+// const time_t seed = time(0);
+// }
 
 int main()
 {
     Pacman::GameField gameField;
 #ifdef DEFINE_DEBUG_STR
-    gameField.DEBUG_STR = false;  // 设为true时GameField::DebugStr才有效
+    gameField.DEBUG_STR = false;
 #endif
 
     string data, globalData;  // 这是回合之间可以传递的信息

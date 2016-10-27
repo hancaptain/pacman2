@@ -1,5 +1,3 @@
-#include "pacman.h"
-
 namespace Helpers
 {
     double actionScore[MAX_DIRECTION];
