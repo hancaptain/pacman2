@@ -1,3 +1,6 @@
+#ifndef HELPERS_H
+#define HELPERS_H
+
 #include "pacman.h"
 
 namespace Helpers
@@ -54,3 +57,5 @@ namespace Helpers
         while (count-- > 0) gameField.PopState();
     }
 }
+
+#endif

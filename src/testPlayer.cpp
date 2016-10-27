@@ -1,9 +1,6 @@
 // 目前用于测试判断死路的功能
 // by wd
 
-#define INCLUDE_CPP
-
-#include "helper.h"
 #include "pacman.h"
 
 using namespace Pacman;
@@ -42,9 +39,14 @@ void scanDeadRoad(int row, int col, int level)
 void scanAllDeadRoad()
 {
     memset(&isDeadRoad, 0, sizeof(isDeadRoad));
+    // 从左上角和右下角各floodfill一次，如果只做一次在初始位置附近会出问题
     memset(&scannedDeadRoad, 0, sizeof(scannedDeadRoad));
     for (int i = 0; i < gameField.height; ++i)
         for (int j = 0; j < gameField.width; ++j) scanDeadRoad(i, j, 0);
+    memset(&scannedDeadRoad, 0, sizeof(scannedDeadRoad));
+    for (int i = 0; i < gameField.height; ++i)
+        for (int j = 0; j < gameField.width; ++j)
+            scanDeadRoad(gameField.height - i, gameField.height - j, 0);
 }
 
 int main()
