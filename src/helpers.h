@@ -1,3 +1,6 @@
+#ifndef HELPERS_H
+#define HELPERS_H
+
 namespace Helpers
 {
     double actionScore[MAX_DIRECTION];
@@ -52,3 +55,5 @@ namespace Helpers
         while (count-- > 0) gameField.PopState();
     }
 }
+
+#endif

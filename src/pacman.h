@@ -31,6 +31,9 @@
 // edit by wd
 // 修改了DebugPrint使之输出到debug.txt
 
+#ifndef PACMAN_H
+#define PACMAN_H
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -854,3 +857,5 @@ namespace Pacman
 
     bool GameField::constructed = false;
 }
+
+#endif

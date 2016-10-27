@@ -1,4 +1,4 @@
-#include "helper.h"
+#include "helpers.h"
 #include "pacman.h"
 
 // namespace Pacman
