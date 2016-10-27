@@ -3,3 +3,5 @@ output.txt
 debug.txt
 src/*.exe
 src/*.o
+bin/
+visual studio/
