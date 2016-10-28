@@ -1,6 +1,6 @@
 {
     "requests" : [ {
-        "GENERATOR_INTERVAL" : 10,
+        "GENERATOR_INTERVAL" : 20,
         "LARGE_FRUIT_DURATION" : 10,
         "LARGE_FRUIT_ENHANCEMENT" : 10,
         "SKILL_COST" : 6,

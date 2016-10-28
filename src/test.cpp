@@ -59,5 +59,17 @@ int main()
     }
     cout << endl;
 
+    cout << "test scanAllFruits" << endl;
+    scanAllFruits(gameField);
+    for (int i = 0; i < allFruitsCount; ++i)
+        cout << allFruits[i].row << " " << allFruits[i].col << endl;
+    cout << endl;
+
+    cout << "test scanAllFruits" << endl;
+    scanFruitGenPlaces(gameField);
+    for (int i = 0; i < fruitGenPlacesCount; ++i)
+        cout << fruitGenPlaces[i].row << " " << fruitGenPlaces[i].col << endl;
+    cout << endl;
+
     cout << "test end" << endl;
 }

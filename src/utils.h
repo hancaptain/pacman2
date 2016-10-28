@@ -45,7 +45,7 @@ void floyd(GameField& gameField, int* array, bool considerEnemy = true)
             if (i == gameField.myID) continue;
             Player& _p = gameField.players[i];
             if (_p.dead) continue;
-            if (_p.strength < gameField.players[gameField.myID].strength)
+            if (_p.strength <= gameField.players[gameField.myID].strength)
                 continue;
             int r = _p.row;
             int c = _p.col;
@@ -276,6 +276,46 @@ Direction shootMustHit(GameField& gameField, int fr, int fc, int tr, int tc)
         else
             return stay;
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// module all fruits
+// by wd
+
+FieldProp allFruits[MAX_GENERATOR_COUNT * 8];
+int allFruitsCount;
+
+void scanAllFruits(GameField& gameField)
+{
+    allFruitsCount = 0;
+    for (int r = 0; r < gameField.height; r++)
+        for (int c = 0; c < gameField.width; c++)
+            if (gameField.fieldContent[r][c] & (smallFruit | largeFruit))
+            {
+                allFruits[allFruitsCount].row = r;
+                allFruits[allFruitsCount].col = c;
+                ++allFruitsCount;
+            }
+}
+
+FieldProp fruitGenPlaces[MAX_GENERATOR_COUNT * 8];
+int fruitGenPlacesCount;
+
+void scanFruitGenPlaces(GameField& gameField)
+{
+    fruitGenPlacesCount = 0;
+    for (int i = 0; i < gameField.generatorCount; ++i)
+        for (int d = 0; d < 8; ++d)
+        {
+            int r = (gameField.generators[i].row + dy[d] + gameField.height) %
+                    gameField.height;
+            int c =
+                (gameField.generators[i].col + dx[d] + gameField.width) % gameField.width;
+            if (gameField.fieldStatic[r][c] & generator) continue;
+            fruitGenPlaces[fruitGenPlacesCount].row = r;
+            fruitGenPlaces[fruitGenPlacesCount].col = c;
+            fruitGenPlacesCount++;
+        }
 }
 
 #endif
