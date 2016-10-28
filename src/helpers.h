@@ -18,7 +18,7 @@ namespace Helpers
         memset(&actionScore, 0, sizeof(actionScore));
     }
 
-    void RandomPlay(Pacman::GameField &gameField, int myID)
+    void RandomPlay(GameField &gameField, int myID)
     {
         int count = 0, myAct = -1;
         while (true)
@@ -27,9 +27,9 @@ namespace Helpers
             for (int i = 0; i < MAX_PLAYER_COUNT; i++)
             {
                 if (gameField.players[i].dead) continue;
-                Pacman::Direction valid[MAX_DIRECTION];
+                Direction valid[MAX_DIRECTION];
                 int vCount = 0;
-                for (Pacman::Direction d = Pacman::stay; d < Pacman::shootLeft;
+                for (Direction d = stay; d < shootLeft;
                      ++d)
                     if (gameField.ActionValid(i, d)) valid[vCount++] = d;
                 gameField.actions[i] = valid[RandBetween(0, vCount)];
@@ -59,3 +59,5 @@ namespace Helpers
 }
 
 #endif
+
+using namespace Helpers;

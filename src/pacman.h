@@ -863,3 +863,5 @@ namespace Pacman
 }
 
 #endif
+
+using namespace Pacman;

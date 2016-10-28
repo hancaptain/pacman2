@@ -414,7 +414,8 @@ namespace MCTS
             {
                 select(s, rootNode);
                 now_time = clock();
-                if ((double)(now_time - start_time) / CLOCKS_PER_SEC > 0.1) // EDITED 0.96
+                if ((double)(now_time - start_time) / CLOCKS_PER_SEC >
+                    0.1)  // EDITED 0.96
                     break;
             }
 
@@ -619,10 +620,17 @@ namespace MCTS
 int main()
 {
     Pacman::GameField gameField;
-    string data, globalData;  // 这是回合之间可以传递的信息
+    string data, globalData;
 
     start_time = clock();
     int myID = gameField.ReadInput("input.txt", data, globalData);
+
+    if (gameField.players[myID].dead)
+    {
+        gameField.WriteOutput((Direction)(-1), "DEAD", data, globalData);
+        return 0;
+    }
+
     auto maxD = MCTS::solve(gameField, myID);
 
     gameField.DebugPrint();

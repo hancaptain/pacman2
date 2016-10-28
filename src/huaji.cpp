@@ -1,4 +1,5 @@
 // by wd
+//
 // edit 1028am
 // 写了一点射击的功能
 // 计算距离和吃果子时不考虑力量不小于自己的人
@@ -6,6 +7,11 @@
 // 所有生成果子的位置存到fruitGenPlaces
 // 用me表示自己
 // 打算写一个计算每个人吃每个果子的可能性的算法，基于迭代
+//
+// edit 1028pm
+// 给每个格子打分，逃跑和吃果子时距离相同时考虑分数
+// 防止力量相等的玩家站在同一格上谁都吃不到果子
+// 比较力量的函数cmpStr
 
 #include "helpers.h"
 #include "pacman.h"
@@ -14,6 +20,7 @@
 #define NO_CHOICE (Direction)(-2)
 #define RUN_AWAY_DISTANCE 2
 #define EAT_ENEMY_DISTANCE 2
+#define CHANGE_TARGET_SCORE 1
 
 int main()
 {
@@ -26,7 +33,8 @@ int main()
     int myID = gameField.ReadInput("input.txt", data, globalData);
     int height = gameField.height;
     int width = gameField.width;
-    Player& me = gameField.players[myID];
+    Player &me = gameField.players[myID];
+    srand(seed + myID + gameField.turnID);
 
     // 自己已死
     if (me.dead)
@@ -35,15 +43,54 @@ int main()
         return 0;
     }
 
-    srand(seed + myID + gameField.turnID);
-    int* a = (int*)malloc(sizeof(int) * height * height * width * width);
+    // 分析场地
+    int *a = (int *)malloc(sizeof(int) * height * height * width * width);
     floyd(gameField, a, true);  // 考虑绕开力量不小于自己的人之后的距离
+    int *realDis = (int *)malloc(sizeof(int) * height * height * width * width);
+    floyd(gameField, realDis, false);  // 真实距离
     scanAllDeadRoad(gameField);
     scanAllFruits(gameField);
+    scanFruitGenPlaces(gameField);
+    scanAllCmpStr(gameField, realDis);
+
+    int nextGenTurn = 0;  // 下次生成果子的回合
+    while (nextGenTurn < gameField.turnID)
+        nextGenTurn += gameField.GENERATOR_INTERVAL;
+    int leftGenTurn = nextGenTurn - gameField.turnID;
+
+    // 给每个格子打分
+    // 对每个果子，玩家能赶到的生成果子的位置，力量比自己小的人，
+    // 分数 += 2^(-dis)
+    double fieldScore[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
+    for (int r = 0; r < gameField.height; ++r)
+        for (int c = 0; c < gameField.width; ++c)
+        {
+            fieldScore[r][c] = 0;
+            for (int i = 0; i < allFruitsCount; ++i)
+            {
+                int dis = DISTANCE(a, r, c, allFruits[i].row, allFruits[i].col);
+                fieldScore[r][c] += pow(2, -dis);
+            }
+            for (int i = 0; i < fruitGenPlacesCount; ++i)
+            {
+                int dis = DISTANCE(a, r, c, fruitGenPlaces[i].row,
+                                   fruitGenPlaces[i].col);
+                if (dis <= leftGenTurn) fieldScore[r][c] += pow(2, -dis);
+            }
+            for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+            {
+                if (i == myID) continue;
+                Player &p = gameField.players[i];
+                if (p.dead) continue;
+                if (allCmpStr[myID][i] <= 0) continue;
+                int dis = DISTANCE(a, r, c, p.row, p.col);
+                fieldScore[r][c] += pow(2, -dis);
+            }
+        }
 
     Direction choice = NO_CHOICE;
 
-    // 逃离比自己力量大的人
+    // 逃离附近比自己力量大的人
     if (choice == NO_CHOICE)
     {
         tauntText = "run away";
@@ -52,12 +99,13 @@ int main()
         for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
         {
             if (i == myID) continue;
-            Player& _p = gameField.players[i];
-            if (_p.dead) continue;
-            if (_p.strength <= me.strength) continue;
-            int r = _p.row;
-            int c = _p.col;
-            int nowDis = DISTANCE(a, r, c, me.row, me.col);
+            Player &p = gameField.players[i];
+            if (p.dead) continue;
+            if (allCmpStr[myID][i] >= 0) continue;
+            int r = p.row;
+            int c = p.col;
+            // 使用真实距离
+            int nowDis = DISTANCE(realDis, r, c, me.row, me.col);
             if (nowDis <= RUN_AWAY_DISTANCE && nowDis < minDis)
             {
                 minDis = nowDis;
@@ -69,36 +117,48 @@ int main()
         if (minDis < INFINITY_DISTANCE)
         {
             tauntText += " from " + to_string(r1) + " " + to_string(c1);
-            // 寻找最近的不是死路的格子
-            minDis = INFINITY_DISTANCE;
-            for (int r = 0; r < height; r++)
-                for (int c = 0; c < width; c++)
-                    if (!isDeadRoad[r][c])
+            // 寻找最近的不是死路且远离敌人的格子
+            int minDis2 = INFINITY_DISTANCE;
+            double maxScore = 0;
+            int r2, c2;
+            for (int r = 0; r < height; ++r)
+                for (int c = 0; c < width; ++c)
+                {
+                    if (isDeadRoad[r][c]) continue;
+                    // 使用真实距离
+                    if (DISTANCE(realDis, r, c, r1, c1) <= RUN_AWAY_DISTANCE)
+                        continue;
+                    int nowDis2 = DISTANCE(a, r, c, me.row, me.col);
+                    if (nowDis2 < minDis2 ||
+                        (nowDis2 == minDis2 && fieldScore[r][c] > maxScore))
                     {
-                        int nowDis = DISTANCE(a, r, c, me.row, me.col);
-                        if (nowDis < minDis)
-                        {
-                            minDis = nowDis;
-                            r1 = r;
-                            c1 = c;
-                        }
+                        minDis2 = nowDis2;
+                        maxScore = fieldScore[r][c];
+                        r2 = r;
+                        c2 = c;
                     }
-        }
+                }
 
-        if (minDis < INFINITY_DISTANCE)
-        {
-            tauntText += " to " + to_string(r1) + " " + to_string(c1);
-            choice = routineFloyd(gameField, me.row, me.col, r1, c1, a);
+            if (minDis2 < INFINITY_DISTANCE)
+            {
+                tauntText += " to " + to_string(r2) + " " + to_string(c2);
+                choice = routineFloyd(gameField, me.row, me.col, r2, c2, a);
+            }
+            else
+            {
+                tauntText += " to nowhere!!!";
+                // TODO
+            }
         }
     }
 
-    // 射必中则射，目前射最远的人，TODO：考虑一次射多人
+    // 射必中则射，目前射最远的人
+    // TODO：一次射多人
+    // TODO：在敌人与自己连线上有果子时射
+    // TODO：敌人从远处来吃自己时射
     if (choice == NO_CHOICE)
     {
-        // 判断力量足够
-        if ((me.powerUpLeft == 0 && me.strength > gameField.SKILL_COST) ||
-            me.strength >
-                gameField.SKILL_COST + gameField.LARGE_FRUIT_ENHANCEMENT)
+        if (me.strength > gameField.SKILL_COST)
         {
             tauntText = "shoot";
             int maxDis = -INFINITY_DISTANCE;
@@ -107,16 +167,13 @@ int main()
             for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
             {
                 if (i == myID) continue;
-                Player& _p = gameField.players[i];
-                if (_p.dead) continue;
-                int r = _p.row;
-                int c = _p.col;
+                Player &p = gameField.players[i];
+                if (p.dead) continue;
+                int r = p.row;
+                int c = p.col;
                 Direction d = shootMustHit(gameField, me.row, me.col, r, c);
-                // cout << gameField.turnID << " shoot test " << r << " " << c
-                // << " " << d << endl;
                 if (d == stay) continue;
                 int nowDis = DISTANCE(a, r, c, me.row, me.col);
-                // cout << nowDis << " " << maxDis << endl;
                 if (nowDis > maxDis)
                 {
                     maxDis = nowDis;
@@ -133,32 +190,37 @@ int main()
         }
     }
 
-    // 贪心，吃能比力量比自己大的人先吃到的果子中的最近者
+    // 吃能比力量比自己大的人先吃到的果子中的最近者
     if (choice == NO_CHOICE)
     {
         tauntText = "eat fruit";
         int minDis = INFINITY_DISTANCE;
+        double maxScore = 0;
         int r1, c1;
         for (int fru = 0; fru < allFruitsCount; ++fru)
         {
             int r = allFruits[fru].row;
             int c = allFruits[fru].col;
+            // 力量相等的玩家站在同一格上谁都吃不到果子
+            if (r == me.row && c == me.col) continue;
             int dis = INFINITY_DISTANCE;
-            int id;
-            for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+            int id;  // 离这个果子最近者的id
+            for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
             {
-                Player& _p = gameField.players[i];
-                if (_p.dead) continue;
-                if (i != myID && _p.strength <= me.strength) continue;
-                if (DISTANCE(a, r, c, _p.row, _p.col) < dis)
+                Player &p = gameField.players[i];
+                if (p.dead) continue;
+                if (i != myID && allCmpStr[myID][i] >= 0) continue;
+                if (DISTANCE(a, r, c, p.row, p.col) < dis)
                 {
-                    dis = DISTANCE(a, r, c, _p.row, _p.col);
+                    dis = DISTANCE(a, r, c, p.row, p.col);
                     id = i;
                 }
             }
-            if (id == myID && dis < minDis)
+            if (id == myID && (dis < minDis ||
+                               (dis == minDis && fieldScore[r][c] > maxScore)))
             {
                 minDis = dis;
+                maxScore = fieldScore[r][c];
                 r1 = r;
                 c1 = c;
             }
@@ -170,31 +232,56 @@ int main()
         }
     }
 
-    // 贪心，吃比自己力量小的人中的最近者
+    // 确保在生成果子的回合移动到生成果子的位置
     if (choice == NO_CHOICE)
     {
-        tauntText = "eat enemy";
+        tauntText = "go to gen";
         int minDis = INFINITY_DISTANCE;
-        int r1, c1, str1 = 0;
-        for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+        int r1, c1;
+        for (int fru = 0; fru < fruitGenPlacesCount; ++fru)
         {
-            if (i == myID) continue;
-            Player& _p = gameField.players[i];
-            if (_p.dead) continue;
-            if (_p.strength >= me.strength) continue;
-            int r = _p.row;
-            int c = _p.col;
+            int r = fruitGenPlaces[fru].row;
+            int c = fruitGenPlaces[fru].col;
             int nowDis = DISTANCE(a, r, c, me.row, me.col);
-            // cout << gameField.turnID << " eat enemy test " << r << " " << c
-            // << " " << nowDis << " " << minDis << endl;
-            // 距离相同则吃力量大者
-            if (nowDis <= EAT_ENEMY_DISTANCE &&
-                (nowDis < minDis || (nowDis == minDis && _p.strength > str1)))
+            if (nowDis < minDis)
             {
                 minDis = nowDis;
                 r1 = r;
                 c1 = c;
-                str1 = _p.strength;
+            }
+        }
+
+        if (minDis >= leftGenTurn)
+        {
+            tauntText += " to " + to_string(r1) + " " + to_string(c1);
+            choice = routineFloyd(gameField, me.row, me.col, r1, c1, a);
+        }
+    }
+
+    // 吃附近比自己力量小的人中的最近者
+    if (choice == NO_CHOICE)
+    {
+        tauntText = "eat enemy";
+        int minDis = INFINITY_DISTANCE;
+        int maxStr = 0;
+        int r1, c1;
+        for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+        {
+            if (i == myID) continue;
+            Player &p = gameField.players[i];
+            if (p.dead) continue;
+            if (allCmpStr[myID][i] <= 0) continue;
+            int r = p.row;
+            int c = p.col;
+            int nowDis = DISTANCE(a, r, c, me.row, me.col);
+            // 距离相同则吃力量大者
+            if (nowDis <= EAT_ENEMY_DISTANCE &&
+                (nowDis < minDis || (nowDis == minDis && p.strength > maxStr)))
+            {
+                minDis = nowDis;
+                r1 = r;
+                c1 = c;
+                maxStr = p.strength;
             }
         }
         if (minDis < INFINITY_DISTANCE)
@@ -204,22 +291,46 @@ int main()
         }
     }
 
-    // 随机模拟
+    // 移动到附近分数较大的格子
     if (choice == NO_CHOICE)
     {
-        tauntText = "random play";
-        Helpers::RandomInit();
-        for (int i = 0; i < 1000; i++) Helpers::RandomPlay(gameField, myID);
-        for (int i = 0; i < 4; i++)
-        {
-            if (choice == NO_CHOICE ||
-                Helpers::actionScore[i] > Helpers::actionScore[choice])
-                choice = (Direction)i;
-        }
-        choice = (Direction)((int)choice - 1);
+        tauntText = "go to high score";
+        Json::Reader reader;
+        Json::FastWriter writer;
+        Json::Value js;
+
+        // 没有找到过目标则初始化
+        if (data == "") data = "{\"s\":-1000,\"r\":-1,\"c\":-1}";
+        reader.parse(data, js);
+        double tScore = js["s"].asDouble();
+        int r1 = js["r"].asInt();
+        int c1 = js["c"].asInt();
+
+        // 如果有格子的分数超过tScore + CHANGE_TARGET_SCORE则修改目标
+        double maxScore = tScore + CHANGE_TARGET_SCORE;
+        for (int r = 0; r < height; ++r)
+            for (int c = 0; c < width; ++c)
+                if (fieldScore[r][c] > maxScore)
+                {
+                    tScore = maxScore = fieldScore[r][c];
+                    r1 = r;
+                    c1 = c;
+                }
+
+        tauntText += " to " + to_string(r1) + " " + to_string(c1);
+        choice = routineFloyd(gameField, me.row, me.col, r1, c1, a);
+
+        js["s"] = tScore;
+        js["r"] = r1;
+        js["c"] = c1;
+        data = writer.write(js);
     }
 
     gameField.DebugPrint();
+#ifdef _BOTZONE_ONLINE
+    gameField.WriteOutput(choice, "", data, globalData);
+#else
     gameField.WriteOutput(choice, tauntText, data, globalData);
+#endif
     return 0;
 }

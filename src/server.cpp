@@ -14,6 +14,8 @@ int main()
     Json::Value input, input2;  // 存储输入和每个玩家的输出
     Json::Reader reader;
     Json::FastWriter writer;
+    string allData[MAX_PLAYER_COUNT];
+    string allGlobalData[MAX_PLAYER_COUNT];
 
     cout << " 0 1111" << endl;
 
@@ -52,8 +54,10 @@ int main()
             fin.open("player" + to_string(i) + "\\output.txt",
                      ifstream::binary);
             fin >> input2;
-            input["requests"][count][to_string(i)] = input2["response"];
             fin.close();
+            input["requests"][count][to_string(i)] = input2["response"];
+            allData[i] = input2["data"].asString();
+            allGlobalData[i] = input2["globaldata"].asString();
 
             // 玩家在tauntText输出SERVER_STOP会让服务器直接停止，用于调试
             if (input2["response"]["tauntText"] == "SERVER_STOP")
@@ -78,6 +82,11 @@ int main()
         {
             // 在输入中添加玩家的id
             input["requests"][0]["id"] = i;
+
+            input["data"] = allData[i];
+            input["globaldata"] = allGlobalData[i];
+            // cout << allData[i] << endl;
+            // cout << allGlobalData[i] << endl;
 
             fout.open("player" + to_string(i) + "\\input.txt");
             fout << writer.write(input);
