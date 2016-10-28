@@ -847,9 +847,7 @@ namespace Pacman
         // 初始化游戏管理器
         GameField()
         {
-            if (constructed)
-                throw runtime_error(
-                    "One GameField Only");
+            if (constructed) throw runtime_error("One GameField Only");
             constructed = true;
             DEBUG_STR = false;
         }
