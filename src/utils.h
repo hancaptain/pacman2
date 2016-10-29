@@ -197,7 +197,84 @@ void scanAllDeadRoad(GameField& gameField)
 // 根据坐标判断射击的方向
 // 如果不能射到，输出stay
 // f是射击者，t是被射者
-// TODO：考虑一次射多人
+
+//new implementation by cp
+
+//If considerMove is set, the function return true when the target will be hit
+//regardless of its move.
+bool shootHit(GameField& gameField, int fr, int fc, int tr, int tc,
+				Direction dir, bool considerMove) 
+{
+	int height = gameField.height;
+	int width = gameField.width;
+	if (considerMove)
+		switch (dir) {
+		case shootUp:
+		case shootDown:
+			if (!(gameField.fieldStatic[tr][tc] & wallWest &&
+				gameField.fieldStatic[tr][tc] & wallEast)) return false;
+			break;
+		case shootLeft:
+		case shootRight:
+			if (!(gameField.fieldStatic[tr][tc] & wallNorth &&
+				gameField.fieldStatic[tr][tc] & wallSouth)) return false;
+			break;
+		}
+	switch (dir) {
+	case shootUp:
+		if (fc != tc) return false;
+		else {
+			for (int i = fr; i != tr; i = (i - 1 + height) % height)
+				if (gameField.fieldStatic[i][fc] & wallNorth) return false;
+			return true;
+		}
+	case shootDown:
+		if (fc != tc) return false;
+		else {
+			for (int i = fr; i != tr; i = (i + 1 + height) % height)
+				if (gameField.fieldStatic[i][fc] & wallSouth) return false;
+			return true;
+		}
+	case shootLeft:
+		if (fr != tr) return false;
+		else {
+			for (int i = fc; i != tc; i = (i - 1 + width) % width)
+				if (gameField.fieldStatic[fr][i] & wallWest) return false;
+			return true;
+		}
+	case shootRight:
+		if (fr != tr) return false;
+		else {
+			for (int i = fc; i != tc; i = (i + 1 + width) % width)
+				if (gameField.fieldStatic[fr][i] & wallEast) return false;
+			return true;
+		}
+	default:
+		return false;
+	}
+}
+
+vector<Direction> validShootDirection(GameField& gameField, int fr, int fc,
+										int tr, int tc, bool considerMove)
+{
+	vector<Direction> ret;
+	for (Direction dir = shootUp; dir <= shootLeft; ++dir)
+		if (shootHit(gameField, fr, fc, tr, tc, dir, considerMove))
+			ret.push_back(dir);
+	return ret;
+}
+
+Direction randomShootDirection(GameField& gameField, int fr, int fc,
+								int tr, int tc, bool considerMove)
+{
+	const vector<Direction>& valid
+		= validShootDirection(gameField, fr, fc, tr, tc, considerMove);
+	if (valid.size() == 0) return stay;
+	return valid[rand()%valid.size()];
+}
+
+//original implementaion by wd
+
 Direction shootDirection(GameField& gameField, int fr, int fc, int tr, int tc)
 {
     bool canShoot;
