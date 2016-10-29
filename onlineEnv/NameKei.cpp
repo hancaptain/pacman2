@@ -1,5 +1,6 @@
 // NameKei
 // by wd cp csy
+// 将名字改为日文以增加威慑力
 
 // Pacman2 样例程序
 // 作者：zhouhy
@@ -857,62 +858,6 @@ namespace Pacman
 
 using namespace Pacman;
 
-namespace Helpers
-{
-    double actionScore[MAX_DIRECTION];
-
-    inline int RandBetween(int a, int b)
-    {
-        if (a > b) swap(a, b);
-        return rand() % (b - a) + a;
-    }
-
-    void RandomInit()
-    {
-        memset(&actionScore, 0, sizeof(actionScore));
-    }
-
-    void RandomPlay(GameField &gameField, int myID)
-    {
-        int count = 0, myAct = -1;
-        while (true)
-        {
-            // 对每个玩家生成随机的合法动作
-            for (int i = 0; i < MAX_PLAYER_COUNT; i++)
-            {
-                if (gameField.players[i].dead) continue;
-                Direction valid[MAX_DIRECTION];
-                int vCount = 0;
-                for (Direction d = stay; d < shootLeft; ++d)
-                    if (gameField.ActionValid(i, d)) valid[vCount++] = d;
-                gameField.actions[i] = valid[RandBetween(0, vCount)];
-            }
-
-            if (count == 0) myAct = gameField.actions[myID];
-
-            // 演算一步局面变化
-            // NextTurn返回true表示游戏没有结束
-            bool hasNext = gameField.NextTurn();
-            count++;
-
-            if (!hasNext) break;
-        }
-
-        // 计算分数
-        int total = 0;
-        for (int _ = 0; _ < MAX_PLAYER_COUNT; _++)
-            total += gameField.players[_].strength;
-        if (total != 0)
-            actionScore[myAct + 1] +=
-                1.0 * gameField.players[myID].strength / total;
-
-        // 恢复游戏状态到最初（就是本回合）
-        while (count-- > 0) gameField.PopState();
-    }
-}
-
-using namespace Helpers;
-
 namespace Utils
 {
 ///////////////////////////////////////////////////////////////////////////////
@@ -1300,6 +1245,12 @@ int main()
         return 0;
     }
 
+    // 初始化data
+    if (data == "") data = "{\"s\":-1000,\"r\":-1,\"c\":-1}";
+    Json::Reader reader;
+    Json::Value js;
+    reader.parse(data, js);
+
     // 分析场地
     int *a = (int *)malloc(sizeof(int) * height * height * width * width);
     floyd(gameField, a, true);  // 考虑绕开力量不小于自己的人之后的距离
@@ -1318,6 +1269,7 @@ int main()
     // 给每个格子打分
     // 对每个果子，玩家能赶到的生成果子的位置，力量比自己小的人，
     // 分数 += 2^(-dis)
+    // 分数高的一般不是死路
     double fieldScore[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
     for (int r = 0; r < gameField.height; ++r)
         for (int c = 0; c < gameField.width; ++c)
@@ -1494,15 +1446,18 @@ int main()
     {
         tauntText = "go to gen";
         int minDis = INFINITY_DISTANCE;
+        double maxScore = 0;
         int r1, c1;
         for (int fru = 0; fru < fruitGenPlacesCount; ++fru)
         {
             int r = fruitGenPlaces[fru].row;
             int c = fruitGenPlaces[fru].col;
             int nowDis = DISTANCE(a, r, c, me.row, me.col);
-            if (nowDis < minDis)
+            if (nowDis < minDis ||
+                (nowDis == minDis && fieldScore[r][c] > maxScore))
             {
                 minDis = nowDis;
+                maxScore = fieldScore[r][c];
                 r1 = r;
                 c1 = c;
             }
@@ -1552,17 +1507,9 @@ int main()
     if (choice == NO_CHOICE)
     {
         tauntText = "go to high score";
-        Json::Reader reader;
-        Json::FastWriter writer;
-        Json::Value js;
-
-        // 没有找到过目标则初始化
-        if (data == "") data = "{\"s\":-1000,\"r\":-1,\"c\":-1}";
-        reader.parse(data, js);
         double tScore = js["s"].asDouble();
         int r1 = js["r"].asInt();
         int c1 = js["c"].asInt();
-
         // 如果有格子的分数超过tScore + CHANGE_TARGET_SCORE则修改目标
         double maxScore = tScore + CHANGE_TARGET_SCORE;
         for (int r = 0; r < height; ++r)
@@ -1573,16 +1520,15 @@ int main()
                     r1 = r;
                     c1 = c;
                 }
-
         tauntText += " to " + to_string(r1) + " " + to_string(c1);
         choice = routineFloyd(gameField, me.row, me.col, r1, c1, a);
-
         js["s"] = tScore;
         js["r"] = r1;
         js["c"] = c1;
-        data = writer.write(js);
     }
 
+    Json::FastWriter writer;
+    data = writer.write(js);
     gameField.DebugPrint();
 #ifdef _BOTZONE_ONLINE
     gameField.WriteOutput(choice, "", data, globalData);

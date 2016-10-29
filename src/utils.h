@@ -12,7 +12,7 @@
 #define DISTANCE_NEAR_ENEMY 1
 #define INFINITY_DISTANCE 1000
 
-#define FIELD(a, r, c) *((a) + (r)*width + (c))
+// #define FIELD(a, r, c) *((a) + (r)*width + (c))
 #define DISTANCE(a, r1, c1, r2, c2)                                        \
     *((a) +                                                                \
       ((r1)*gameField.width + (c1)) * gameField.width * gameField.height + \

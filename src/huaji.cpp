@@ -12,15 +12,22 @@
 // 给每个格子打分，逃跑和吃果子时距离相同时考虑分数
 // 防止力量相等的玩家站在同一格上谁都吃不到果子
 // 比较力量的函数cmpStr
+//
+// edit 1029am
+// 接下来要考虑怎么射，目前地图上有长直线时会被虐
+// data的初始化和写入移到模块外面
+// 移动到生成果子的位置时，距离相同时考虑分数
+// 计算分数时考虑力量与自己相等和比自己大的人
 
-#include "helpers.h"
 #include "pacman.h"
 #include "utils.h"
 
 #define NO_CHOICE (Direction)(-2)
 #define RUN_AWAY_DISTANCE 2
 #define EAT_ENEMY_DISTANCE 2
-#define CHANGE_TARGET_SCORE 1
+#define CHANGE_TARGET_SCORE 1.0
+#define SAME_ENEMY_SCORE -0.5
+#define BIG_ENEMY_SCORE -2.0
 
 int main()
 {
@@ -43,6 +50,12 @@ int main()
         return 0;
     }
 
+    // 初始化data
+    if (data == "") data = "{\"s\":-1000,\"r\":-1,\"c\":-1}";
+    Json::Reader reader;
+    Json::Value js;
+    reader.parse(data, js);
+
     // 分析场地
     int *a = (int *)malloc(sizeof(int) * height * height * width * width);
     floyd(gameField, a, true);  // 考虑绕开力量不小于自己的人之后的距离
@@ -61,6 +74,11 @@ int main()
     // 给每个格子打分
     // 对每个果子，玩家能赶到的生成果子的位置，力量比自己小的人，
     // 分数 += 2^(-dis)
+    // 对每个力量与自己相等的人，
+    // 分数 += SAME_ENEMY_SCORE * 2^(-dis)
+    // 对每个力量比自己大的人，
+    // 分数 += BIG_ENEMY_SCORE * 2^(-dis)
+    // 分数高的一般不是死路
     double fieldScore[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
     for (int r = 0; r < gameField.height; ++r)
         for (int c = 0; c < gameField.width; ++c)
@@ -82,15 +100,22 @@ int main()
                 if (i == myID) continue;
                 Player &p = gameField.players[i];
                 if (p.dead) continue;
-                if (allCmpStr[myID][i] <= 0) continue;
                 int dis = DISTANCE(a, r, c, p.row, p.col);
-                fieldScore[r][c] += pow(2, -dis);
+                if (allCmpStr[myID][i] > 0)
+                    fieldScore[r][c] += pow(2, -dis);
+                else if (allCmpStr[myID][i] == 0)
+                    fieldScore[r][c] += SAME_ENEMY_SCORE * pow(2, -dis);
+                else
+                    fieldScore[r][c] += BIG_ENEMY_SCORE * pow(2, -dis);
             }
         }
 
     Direction choice = NO_CHOICE;
 
+    // TODO：在做所有动作时防止被射，走进死路
+
     // 逃离附近比自己力量大的人
+    // TODO：旁边有果子且吃后能反超则吃
     if (choice == NO_CHOICE)
     {
         tauntText = "run away";
@@ -119,7 +144,7 @@ int main()
             tauntText += " from " + to_string(r1) + " " + to_string(c1);
             // 寻找最近的不是死路且远离敌人的格子
             int minDis2 = INFINITY_DISTANCE;
-            double maxScore = 0;
+            double maxScore = -INFINITY_DISTANCE;
             int r2, c2;
             for (int r = 0; r < height; ++r)
                 for (int c = 0; c < width; ++c)
@@ -195,13 +220,16 @@ int main()
     {
         tauntText = "eat fruit";
         int minDis = INFINITY_DISTANCE;
-        double maxScore = 0;
+        double maxScore = -INFINITY_DISTANCE;
         int r1, c1;
         for (int fru = 0; fru < allFruitsCount; ++fru)
         {
             int r = allFruits[fru].row;
             int c = allFruits[fru].col;
             // 力量相等的玩家站在同一格上谁都吃不到果子
+            // TODO：czllgzmzl跟我出现了5回合行动完全一样的情况？
+            //       如果连续两回合跟别人站在同一格上，
+            //       第二回合往第一回合的位置射一发
             if (r == me.row && c == me.col) continue;
             int dis = INFINITY_DISTANCE;
             int id;  // 离这个果子最近者的id
@@ -237,15 +265,18 @@ int main()
     {
         tauntText = "go to gen";
         int minDis = INFINITY_DISTANCE;
+        double maxScore = -INFINITY_DISTANCE;
         int r1, c1;
         for (int fru = 0; fru < fruitGenPlacesCount; ++fru)
         {
             int r = fruitGenPlaces[fru].row;
             int c = fruitGenPlaces[fru].col;
             int nowDis = DISTANCE(a, r, c, me.row, me.col);
-            if (nowDis < minDis)
+            if (nowDis < minDis ||
+                (nowDis == minDis && fieldScore[r][c] > maxScore))
             {
                 minDis = nowDis;
+                maxScore = fieldScore[r][c];
                 r1 = r;
                 c1 = c;
             }
@@ -295,17 +326,9 @@ int main()
     if (choice == NO_CHOICE)
     {
         tauntText = "go to high score";
-        Json::Reader reader;
-        Json::FastWriter writer;
-        Json::Value js;
-
-        // 没有找到过目标则初始化
-        if (data == "") data = "{\"s\":-1000,\"r\":-1,\"c\":-1}";
-        reader.parse(data, js);
         double tScore = js["s"].asDouble();
         int r1 = js["r"].asInt();
         int c1 = js["c"].asInt();
-
         // 如果有格子的分数超过tScore + CHANGE_TARGET_SCORE则修改目标
         double maxScore = tScore + CHANGE_TARGET_SCORE;
         for (int r = 0; r < height; ++r)
@@ -316,16 +339,15 @@ int main()
                     r1 = r;
                     c1 = c;
                 }
-
         tauntText += " to " + to_string(r1) + " " + to_string(c1);
         choice = routineFloyd(gameField, me.row, me.col, r1, c1, a);
-
         js["s"] = tScore;
         js["r"] = r1;
         js["c"] = c1;
-        data = writer.write(js);
     }
 
+    Json::FastWriter writer;
+    data = writer.write(js);
     gameField.DebugPrint();
 #ifdef _BOTZONE_ONLINE
     gameField.WriteOutput(choice, "", data, globalData);

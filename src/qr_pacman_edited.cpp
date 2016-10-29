@@ -33,8 +33,10 @@ namespace Exia
         if (nxt.second < 0) nxt.second += width;
         if (nxt.second >= width) nxt.second -= width;
     }
+    
     int sumstep;
-    int Dfs(Pacman::GameField &G, II now, II target, int step)
+    
+    int Dfs(GameField &G, II now, II target, int step)
     {
         if (step > sumstep) return -1000;
         if (now == target)
@@ -68,7 +70,8 @@ namespace Exia
         searched[now.first][now.second] = false;
         return sum_dir;
     }
-    int get_neighborhood(Pacman::GameField &G, const II st)
+    
+    int get_neighborhood(GameField &G, const II st)
     {
         L.clear();
         L.push_back(st);
@@ -114,7 +117,7 @@ namespace Exia
         return x > y ? x : y;
     }
 
-    int Find_road(Pacman::GameField &G, II now, II target)
+    int Find_road(GameField &G, II now, II target)
     {
         if (now == target) return 0;
 
@@ -154,20 +157,23 @@ namespace Exia
         searched[now.first][now.second] = false;
         return res;
     }
-    int calc_power(Pacman::GameField &G, int id, int turn)
+    
+    int calc_power(GameField &G, int id, int turn)
     {
         if (G.players[id].powerUpLeft != 0 && turn > G.players[id].powerUpLeft)
             return G.players[id].strength - G.LARGE_FRUIT_ENHANCEMENT;
         else
             return G.players[id].strength;
     }
+    
     struct node
     {
         II cor;
         int dir;
         int dis;
     };
-    int calc_shortest_near(Pacman::GameField &G, int nowx, int nowy)
+    
+    int calc_shortest_near(GameField &G, int nowx, int nowy)
     {
         int res = 100000;
         for (int i = 0; i < G.generatorCount; i++)
@@ -210,18 +216,20 @@ namespace Exia
         }
         return res;
     }
+    
     bool cmp(node A, node B)
     {
         return A.dis < B.dis;
     }
-    int my_strategy(Pacman::GameField &G, int myID)
+    
+    int my_strategy(GameField &G, int myID)
     {
         height = G.height;
         width = G.width;
-        //
+        
         // printf("%d %d\n", G.players[myID].row, G.players[myID].col);
         // printf("%d\n", G.turnID);
-        //
+        
         bool warning[5], must_move[5];
         bool MM = false;
         memset(warning, false, sizeof(warning));
@@ -381,6 +389,7 @@ namespace Exia
                 }
             }
         }
+        
         II canEat[1010];
         int NUM = 0;
         double value[1010];
@@ -418,6 +427,7 @@ namespace Exia
                 }
             }
         }
+        
         int target = -1;
         for (int i = 1; i <= NUM; i++)
         {
@@ -583,9 +593,11 @@ namespace Exia
     }
 }
 
+using namespace Exia;
+
 int main()
 {
-    Pacman::GameField gameField;
+    GameField gameField;
     string data, globalData;
 
     int myID = gameField.ReadInput("input.txt", data, globalData);
@@ -596,10 +608,10 @@ int main()
         return 0;
     }
 
-    srand(Pacman::seed + myID);
-    int dir = Exia::my_strategy(gameField, myID);
+    srand(seed + myID);
+    int dir = my_strategy(gameField, myID);
 
     gameField.DebugPrint();
-    gameField.WriteOutput((Pacman::Direction)(dir), "", data, globalData);
+    gameField.WriteOutput((Direction)(dir), "", data, globalData);
     return 0;
 }
