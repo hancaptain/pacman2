@@ -19,7 +19,6 @@ int start_time;
 
 namespace MCTS
 {
-    using namespace Pacman;
     typedef Direction Move;
 
     struct Board
@@ -58,6 +57,7 @@ namespace MCTS
             const GridStaticType &s = fieldStatic[p.row][p.col];
             return dir >= -1 && dir < 4 && !(s & direction2OpposingWall[dir]);
         }
+
         void makeMove(Move m)
         {
             if (remain == 0)
@@ -72,18 +72,22 @@ namespace MCTS
                 remain--;
             }
         }
+
         int getCurrentPlayer()
         {
             return currentPlayer;
         }
+
         int getQuantityOfPlayers()
         {
             return 4;
         }
+
         bool gameOver()
         {
             return turnID >= 100 || aliveCount <= 1;
         }
+
         vector<double> getScore()
         {
             int rank[4] = {0, 1, 2, 3};
@@ -387,22 +391,23 @@ namespace MCTS
         }
     };
 
-#define nextInt(x) Helpers::RandBetween(0, x)
+#define nextInt(x) RandBetween(0, x)
 
     class MCTS
     {
+       public:
         shared_ptr<Node> rootNode;
         double explorationConstant = sqrt(2.0);
         bool trackTime;  // display thinking time used
         int timeLimit;   // Set a time limit per move.
-                         /**
-                          * Run a UCT-MCTS simulation for a number of iterations.
-                          *
-                          * @param s
-                          * @param runs
-                          * @return
-                          */
-       public:
+
+        /**
+         * Run a UCT-MCTS simulation for a number of iterations.
+         *
+         * @param s
+         * @param runs
+         * @return
+         */
         Move runMCTS(Board s, int runs)
         {
             rootNode = shared_ptr<Node>(new Node(s));
@@ -414,16 +419,15 @@ namespace MCTS
             {
                 select(s, rootNode);
                 now_time = clock();
-                if ((double)(now_time - start_time) / CLOCKS_PER_SEC > 0.1) // EDITED 0.96
+                // EDITED 0.96
+                if ((double)(now_time - start_time) / CLOCKS_PER_SEC > 0.1)
                     break;
             }
 
             // long endTime = System.nanoTime();
-            /*
-            if (this.trackTime)
-                System.out.println("Thinking time per move in milliseconds: " +
-                                   (endTime - startTime) / 1000000);
-                                   */
+            // if (this.trackTime)
+            // System.out.println("Thinking time per move in milliseconds: " +
+            // (endTime - startTime) / 1000000);
 
             return finalSelect(rootNode);
         }
@@ -433,13 +437,12 @@ namespace MCTS
          * algorithm.
          * Traverse down to the bottom of the tree using the selection strategy
          * until you find an unexpanded child node. Expand it. Run a random
-         * playout
+         * playout.
          * Backpropagate results of the playout.
          *
          * @param node
          *            Node from which to start selection
          */
-       private:
         void select(Board brd, shared_ptr<Node> node)
         {
             shared_ptr<Node> currentNode = node;
@@ -540,7 +543,6 @@ namespace MCTS
          *            this is the node whose children are considered
          * @return the best Move the algorithm can find
          */
-       public:
         Move finalSelect(shared_ptr<Node> n)
         {
             double bestValue = -1e9;
@@ -595,12 +597,8 @@ namespace MCTS
         {
             explorationConstant = exp;
         }
-
-        /**
-         *
-         * @param board
-         */
     };
+
     Move run(int myID, GameField &gameField, int it, double exp = sqrt(2.0))
     {
         MCTS player;
@@ -616,14 +614,23 @@ namespace MCTS
     }
 }
 
+using namespace MCTS;
+
 int main()
 {
-    Pacman::GameField gameField;
-    string data, globalData;  // 这是回合之间可以传递的信息
+    GameField gameField;
+    string data, globalData;
 
     start_time = clock();
     int myID = gameField.ReadInput("input.txt", data, globalData);
-    auto maxD = MCTS::solve(gameField, myID);
+
+    if (gameField.players[myID].dead)
+    {
+        gameField.WriteOutput((Direction)(-1), "DEAD", data, globalData);
+        return 0;
+    }
+
+    auto maxD = solve(gameField, myID);
 
     gameField.DebugPrint();
     gameField.WriteOutput(maxD, "", data, globalData);

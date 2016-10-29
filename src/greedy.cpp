@@ -13,11 +13,11 @@ int main()
     gameField.DEBUG_STR = false;
 #endif
 
-    string data, globalData;  // 这是回合之间可以传递的信息
+    string data, globalData;  // 杩欐槸鍥炲悎涔嬮棿鍙互浼犻�掔殑淇℃伅
 
     int myID = gameField.ReadInput("input.txt", data, globalData);
 
-    // 自己已死
+    // 鑷繁宸叉
     if (gameField.players[myID].dead)
     {
         gameField.WriteOutput((Direction)(-1), "DEAD", data,

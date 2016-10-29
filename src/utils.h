@@ -1,26 +1,27 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cmath>
 #include <deque>
 #include "pacman.h"
-
-using namespace Pacman;
 
 ///////////////////////////////////////////////////////////////////////////////
 // module distance
 // by cp
 
-#define DISTANCE_NEAR_ENEMY 2
+#define DISTANCE_NEAR_ENEMY 1
 #define INFINITY_DISTANCE 1000
 
-#define FIELD(a, r, c) *((a) + (r)*width + (c))
-#define DISTANCE(a, r1, c1, r2, c2) \
-    *((a) + ((r1)*width + (c1)) * width * height + (r2)*width + (c2))
+// #define FIELD(a, r, c) *((a) + (r)*width + (c))
+#define DISTANCE(a, r1, c1, r2, c2)                                        \
+    *((a) +                                                                \
+      ((r1)*gameField.width + (c1)) * gameField.width * gameField.height + \
+      (r2)*gameField.width + (c2))
 
 // array is width * height * width * height
 // array[r1][c1][r2][c2] means the shortest distance from (r1, c1) to (r2, c2)
 // add considerEnemy by wd
-void floyd(GameField& gameField, int* array, bool considerEnemy = true)
+void floyd(GameField& gameField, int* array, bool considerEnemy = false)
 {
     int height = gameField.height;  // r
     int width = gameField.width;    // c
@@ -45,11 +46,12 @@ void floyd(GameField& gameField, int* array, bool considerEnemy = true)
             if (i == gameField.myID) continue;
             Player& _p = gameField.players[i];
             if (_p.dead) continue;
-            if (_p.strength < gameField.players[gameField.myID].strength)
+            if (_p.strength <= gameField.players[gameField.myID].strength)
                 continue;
             int r = _p.row;
             int c = _p.col;
             GridStaticType& type = gameField.fieldStatic[r][c];
+            DISTANCE(array, r, c, r, c) += DISTANCE_NEAR_ENEMY;
             for (int d = 0; d < 4; ++d)
                 if (!(type & direction2OpposingWall[d]))
                     DISTANCE(array, r, c, (r + dy[d] + height) % height,
@@ -154,9 +156,6 @@ int wallCount[FIELD_MAX_HEIGHT][FIELD_MAX_WIDTH];
 void scanDeadRoad(GameField& gameField, int row, int col, int level)
 {
     if (scannedDeadRoad[row][col]) return;
-    // for (int i = 0; i < level; ++i) cout << " ";
-    // cout << row << " " << col << " "
-    // << gameField.fieldStatic[row][col] << endl;
     scannedDeadRoad[row][col] = true;
 
     int nowWallCount = 0;  // 旁边的墙或死路
@@ -276,6 +275,86 @@ Direction shootMustHit(GameField& gameField, int fr, int fc, int tr, int tc)
         else
             return stay;
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// module all fruits
+// by wd
+
+FieldProp allFruits[MAX_GENERATOR_COUNT * 8];
+int allFruitsCount;
+
+void scanAllFruits(GameField& gameField)
+{
+    allFruitsCount = 0;
+    for (int r = 0; r < gameField.height; r++)
+        for (int c = 0; c < gameField.width; c++)
+            if (gameField.fieldContent[r][c] & (smallFruit | largeFruit))
+            {
+                allFruits[allFruitsCount].row = r;
+                allFruits[allFruitsCount].col = c;
+                ++allFruitsCount;
+            }
+}
+
+FieldProp fruitGenPlaces[MAX_GENERATOR_COUNT * 8];
+int fruitGenPlacesCount;
+
+void scanFruitGenPlaces(GameField& gameField)
+{
+    fruitGenPlacesCount = 0;
+    for (int i = 0; i < gameField.generatorCount; ++i)
+        for (int d = 0; d < 8; ++d)
+        {
+            int r = (gameField.generators[i].row + dy[d] + gameField.height) %
+                    gameField.height;
+            int c = (gameField.generators[i].col + dx[d] + gameField.width) %
+                    gameField.width;
+            if (gameField.fieldStatic[r][c] & generator) continue;
+            fruitGenPlaces[fruitGenPlacesCount].row = r;
+            fruitGenPlaces[fruitGenPlacesCount].col = c;
+            fruitGenPlacesCount++;
+        }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// module compare strength
+// by wd
+
+// [自己][对方]
+int allCmpStr[MAX_PLAYER_COUNT][MAX_PLAYER_COUNT];
+
+// 对比两个人的力量
+// 考虑距离和大果子加成剩余时间，没有考虑途中的果子
+// 距离要使用真实距离
+// fp是自己，tp是对方
+// fPlus，tPlus可以在计算时增加一些力量
+// 自己力量比对方大则返回1，相等则返回0，小则返回-1
+int cmpStr(GameField& gameField, int* realDis, Player& fp, Player& tp,
+           int fPlus = 0, int tPlus = 0)
+{
+    int fstr = fp.strength + fPlus;
+    int tstr = tp.strength + tPlus;
+    // 最坏情况下两人相向而行，每人走一半距离
+    int dis = DISTANCE(realDis, fp.row, fp.col, tp.row, tp.col) * 0.5;
+    if (fp.powerUpLeft <= dis) fstr -= gameField.LARGE_FRUIT_ENHANCEMENT;
+    if (tp.powerUpLeft <= dis) tstr -= gameField.LARGE_FRUIT_ENHANCEMENT;
+    if (fstr > tstr) return 1;
+    if (fstr == tstr) return 0;
+    return -1;
+}
+
+// 全部扫描并缓存
+void scanAllCmpStr(GameField& gameField, int* realDis)
+{
+    for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+        for (int j = 0; j < MAX_PLAYER_COUNT; ++j)
+            if (i == j)
+                allCmpStr[i][j] = 0;
+            else
+                allCmpStr[i][j] =
+                    cmpStr(gameField, realDis, gameField.players[i],
+                           gameField.players[j]);
 }
 
 #endif

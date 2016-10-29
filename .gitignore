@@ -3,5 +3,7 @@ output.txt
 debug.txt
 src/*.exe
 src/*.o
+onlineEnv/*.exe
+onlineEnv/*.o
 bin/
 visual studio/

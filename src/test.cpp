@@ -1,5 +1,8 @@
 #include "utils.h"
 
+#define TEST_ROW 6
+#define TEST_COL 2
+
 int main()
 {
     GameField gameField;
@@ -13,7 +16,8 @@ int main()
     floyd(gameField, a);
     for (int r = 0; r < height; r++)
     {
-        for (int c = 0; c < width; c++) cout << DISTANCE(a, 3, 3, r, c) << "\t";
+        for (int c = 0; c < width; c++)
+            cout << DISTANCE(a, TEST_ROW, TEST_COL, r, c) << "\t";
         cout << endl;
     }
     cout << endl;
@@ -22,8 +26,8 @@ int main()
     // cout<<"test dijkstra"<<endl;
     // for (int r = 0; r < gameField.height; r++)
     // for (int c = 0; c < gameField.width; c++)
-    // if (routine_floyd(gameField, r, c, 3, 3, a) !=
-    // dijkstra(gameField, r, c, 3, 3))
+    // if (routine_floyd(gameField, r, c, TEST_ROW, TEST_COL, a) !=
+    // dijkstra(gameField, r, c, TEST_ROW, TEST_COL))
     // cout << "error on (" << r << ", " << c << ")" << endl;
 
     cout << "test scanAllDeadRoad" << endl;
@@ -45,7 +49,7 @@ int main()
     for (int r = 0; r < height; r++)
     {
         for (int c = 0; c < width; c++)
-            cout << shootDirection(gameField, 3, 3, r, c) << "\t";
+            cout << shootDirection(gameField, TEST_ROW, TEST_COL, r, c) << "\t";
         cout << endl;
     }
     cout << endl;
@@ -54,9 +58,21 @@ int main()
     for (int r = 0; r < height; r++)
     {
         for (int c = 0; c < width; c++)
-            cout << shootMustHit(gameField, 3, 3, r, c) << "\t";
+            cout << shootMustHit(gameField, TEST_ROW, TEST_COL, r, c) << "\t";
         cout << endl;
     }
+    cout << endl;
+
+    cout << "test scanAllFruits" << endl;
+    scanAllFruits(gameField);
+    for (int i = 0; i < allFruitsCount; ++i)
+        cout << allFruits[i].row << " " << allFruits[i].col << endl;
+    cout << endl;
+
+    cout << "test scanAllFruits" << endl;
+    scanFruitGenPlaces(gameField);
+    for (int i = 0; i < fruitGenPlacesCount; ++i)
+        cout << fruitGenPlaces[i].row << " " << fruitGenPlaces[i].col << endl;
     cout << endl;
 
     cout << "test end" << endl;
