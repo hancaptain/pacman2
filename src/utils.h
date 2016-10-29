@@ -328,11 +328,13 @@ int allCmpStr[MAX_PLAYER_COUNT][MAX_PLAYER_COUNT];
 // 考虑距离和大果子加成剩余时间，没有考虑途中的果子
 // 距离要使用真实距离
 // fp是自己，tp是对方
+// fPlus，tPlus可以在计算时增加一些力量
 // 自己力量比对方大则返回1，相等则返回0，小则返回-1
-int cmpStr(GameField& gameField, int* realDis, Player& fp, Player& tp)
+int cmpStr(GameField& gameField, int* realDis, Player& fp, Player& tp,
+           int fPlus = 0, int tPlus = 0)
 {
-    int fstr = fp.strength;
-    int tstr = tp.strength;
+    int fstr = fp.strength + fPlus;
+    int tstr = tp.strength + tPlus;
     // 最坏情况下两人相向而行，每人走一半距离
     int dis = DISTANCE(realDis, fp.row, fp.col, tp.row, tp.col) * 0.5;
     if (fp.powerUpLeft <= dis) fstr -= gameField.LARGE_FRUIT_ENHANCEMENT;
